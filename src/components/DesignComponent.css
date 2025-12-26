@@ -45,6 +45,20 @@
   z-index: 1;
 }
 
+/* Search input container */
+.search-input-container {
+  position: relative;
+  display: inline-block;
+}
+
+.search-input-container.search-input-positioned {
+  position: absolute;
+  left: 266px;
+  top: 16.86px;
+  width: 506px;
+  z-index: 2;
+}
+
 /* Search input wrapper */
 .search-input-wrapper {
   position: relative;
@@ -58,14 +72,6 @@
   padding-right: 8px;
   overflow: hidden;
   transition: all 0.2s ease;
-}
-
-.search-input-positioned {
-  position: absolute;
-  left: 266px;
-  top: 16.86px;
-  width: 506px;
-  z-index: 2;
 }
 
 /* Default state */

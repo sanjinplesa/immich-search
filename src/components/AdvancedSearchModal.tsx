@@ -3,24 +3,57 @@ import './AdvancedSearchModal.css';
 import searchIcon from '../assets/search-icon.svg';
 import closeXIcon from '../assets/close-x-icon.svg';
 import iconButtonsSvg from '../assets/icon-buttons.svg';
+import filterIcon from '../assets/filter-icon.svg';
+import arrowDownIcon from '../assets/arrow-down-icon.svg';
+import arrowRightIcon from '../assets/16f676d5be3442ecdd9228f68fac1693697db02a.svg';
 
 interface AdvancedSearchModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialSearchValue?: string;
 }
 
-const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClose }) => {
+const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClose, initialSearchValue = '' }) => {
   const [selectedType, setSelectedType] = useState<'all' | 'photos' | 'videos'>('photos');
   const [selectedFileType, setSelectedFileType] = useState<string>('all');
   const [selectedSearchIn, setSelectedSearchIn] = useState<string>('all');
   const [tags, setTags] = useState<string[]>(['beach', 'summer 2025']);
+
+  // Random photos for people - using different seeds for variety
+  const peoplePhotos = [
+    'https://i.pravatar.cc/150?img=12', // Oliver Thompson
+    'https://i.pravatar.cc/150?img=47', // Sophia Martinez
+    'https://i.pravatar.cc/150?img=33', // Liam Johnson
+    'https://i.pravatar.cc/150?img=68', // Emma Williams
+    'https://i.pravatar.cc/150?img=15', // Unnamed 1
+    'https://i.pravatar.cc/150?img=32', // Unnamed 2
+  ];
   
   // Search input states
   const [isFocused, setIsFocused] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  const [searchValue, setSearchValue] = useState('');
+  const [searchValue, setSearchValue] = useState(initialSearchValue);
   const [showCursor, setShowCursor] = useState(true);
+  const [justOpened, setJustOpened] = useState(true);
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Update search value only when modal first opens
+  useEffect(() => {
+    if (isOpen) {
+      // Set initial value when modal opens
+      if (initialSearchValue) {
+        setSearchValue(initialSearchValue);
+      }
+      // Reset focus state and justOpened flag when modal opens
+      setIsFocused(false);
+      setJustOpened(true);
+      // Don't auto-focus - let user see default state first
+    } else {
+      // Reset justOpened when modal closes
+      setJustOpened(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]); // Only depend on isOpen to preserve user input
 
   // Blinking cursor animation
   useEffect(() => {
@@ -71,6 +104,22 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
     }, 0);
   };
 
+  const handleClearAll = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Clear all filters logic can be added here
+    setSearchValue('');
+    setSelectedType('photos');
+    setSelectedFileType('all');
+    setSelectedSearchIn('all');
+    setTags([]);
+  };
+
+  const handleClearAllMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
   const handleSearchKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') {
       setSearchValue('');
@@ -79,16 +128,23 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
   };
 
   // Determine search input state
+  // Show default state when modal just opened, even if there's a value
   let searchState: "Default" | "Active4" | "Active" | "Typing" = "Default";
   if (isFocused && searchValue) {
     searchState = "Typing";
   } else if (isFocused) {
     searchState = "Active";
-  } else if (isHovered && !isFocused) {
+  } else if (justOpened) {
+    // Show default state when modal just opened, even if there's a value
+    searchState = "Default";
+  } else if (searchValue) {
+    // If there's text and modal has been interacted with, show typing state
+    searchState = "Typing";
+  } else if (isHovered) {
     searchState = "Active4";
   }
 
-  const placeholderText = "Try 'sunset at the beach' or 'people laughing...'";
+  const placeholderText = "Search photos by content, people, or metadata";
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -130,8 +186,8 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
               {searchState === "Typing" ? (
                 <>
                   <div className="modal-search-text-typing">
-                    {showCursor && <span className="modal-search-cursor">|</span>}
                     <p className="modal-search-typed-text">{searchValue}</p>
+                    {isFocused && showCursor && <span className="modal-search-cursor">|</span>}
                   </div>
                   <div 
                     className="modal-search-clear-button" 
@@ -166,6 +222,7 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
               onFocus={() => {
                 setIsFocused(true);
                 setIsHovered(false);
+                setJustOpened(false); // Clear justOpened flag when user focuses
               }}
               onBlur={handleSearchBlur}
               onKeyDown={handleSearchKeyDown}
@@ -223,45 +280,53 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
                 <div className="modal-person-item" data-name="Component 6" data-node-id="1587:3322">
                   <div className="modal-person-avatar" data-node-id="I1587:3322;1534:1737">
                     <div className="modal-person-avatar-bg" />
+                    <img src={peoplePhotos[0]} alt="Oliver Thompson" className="modal-person-avatar-img" />
                   </div>
                   <p className="modal-person-name">Oliver Thompson</p>
                 </div>
                 <div className="modal-person-item modal-person-selected" data-node-id="1587:3323">
                   <div className="modal-person-avatar" data-node-id="I1587:3323;1538:1945">
                     <div className="modal-person-avatar-bg" />
+                    <img src={peoplePhotos[1]} alt="Sophia Martinez" className="modal-person-avatar-img" />
                   </div>
                   <p className="modal-person-name">Sophia Martinez</p>
                 </div>
                 <div className="modal-person-item" data-node-id="1587:3324">
                   <div className="modal-person-avatar" data-node-id="I1587:3324;1534:1737">
                     <div className="modal-person-avatar-bg" />
+                    <img src={peoplePhotos[2]} alt="Liam Johnson" className="modal-person-avatar-img" />
                   </div>
                   <p className="modal-person-name">Liam Johnson</p>
                 </div>
                 <div className="modal-person-item" data-node-id="1587:3325">
                   <div className="modal-person-avatar" data-node-id="I1587:3325;1534:1737">
                     <div className="modal-person-avatar-bg" />
+                    <img src={peoplePhotos[3]} alt="Emma Williams" className="modal-person-avatar-img" />
                   </div>
                   <p className="modal-person-name">Emma Williams</p>
                 </div>
                 <div className="modal-person-item" data-node-id="1587:3326">
                   <div className="modal-person-avatar" data-node-id="I1587:3326;1534:1737">
                     <div className="modal-person-avatar-bg" />
+                    <img src={peoplePhotos[4]} alt="Unnamed" className="modal-person-avatar-img" />
                   </div>
                   <p className="modal-person-name modal-person-name-unnamed">Unnamed</p>
                 </div>
                 <div className="modal-person-item" data-node-id="1587:3327">
                   <div className="modal-person-avatar" data-node-id="I1587:3327;1534:1737">
                     <div className="modal-person-avatar-bg" />
+                    <img src={peoplePhotos[5]} alt="Unnamed" className="modal-person-avatar-img" />
                   </div>
                   <p className="modal-person-name modal-person-name-unnamed">Unnamed</p>
                 </div>
-                <div className="modal-person-item modal-person-see-all" data-name="Component" data-selected="Selected3">
-                  <div className="modal-person-avatar modal-person-avatar-see-all">
+                <div className="modal-person-item modal-person-see-all" data-name="Component" data-selected="Selected3" data-node-id="1563:5040">
+                  <div className="modal-person-avatar modal-person-avatar-see-all" data-node-id="1563:5041">
                     <div className="modal-person-avatar-bg-see-all" />
-                    <div className="modal-person-arrow">→</div>
+                    <div className="modal-person-arrow" data-name="Arrow-Right--Streamline-Tabler" data-node-id="1563:5043">
+                      <img src={arrowRightIcon} alt="See all" className="modal-person-arrow-icon" />
+                    </div>
                   </div>
-                  <p className="modal-person-name-see-all">See all</p>
+                  <p className="modal-person-name-see-all" data-node-id="1563:5042">See all</p>
                 </div>
               </div>
             </div>
@@ -379,16 +444,40 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
         {/* Footer */}
         <div className="modal-footer" data-node-id="1587:3363">
           <div className="modal-footer-content" data-node-id="1587:3364">
-            <div className="modal-show-more" data-name="Badge" data-node-id="1587:3365">
-              <p className="modal-show-more-text">Show more filters</p>
-              <div className="modal-show-more-icon">↓</div>
+            <div className="modal-show-more" data-name="Buttons/Button" data-node-id="1605:3965">
+              <div className="modal-show-more-content" data-name="Text padding" data-node-id="1605:3967">
+                <div className="modal-show-more-filter-icon" data-name="Frame" data-node-id="1605:3968">
+                  <img alt="" className="modal-show-more-filter-icon-img" src={filterIcon} />
+                </div>
+                <p className="modal-show-more-text" data-node-id="1605:3978">Advanced filters</p>
+                <div className="modal-show-more-chevron-wrapper" data-name="Badge" data-node-id="1605:4000">
+                  <div className="modal-show-more-chevron-icon-wrapper" data-name="Icon Buttons" data-node-id="1605:4004">
+                    <div className="modal-show-more-chevron-icon" data-name="Badge Icons" data-node-id="1605:4005">
+                      <div className="modal-show-more-chevron-vector" data-name="Vector" data-node-id="I1605:4005;1492:5119">
+                        <img alt="" className="modal-show-more-chevron-img" src={arrowDownIcon} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="modal-footer-actions" data-node-id="1587:3373">
-              <button className="modal-clear-all-button" data-name="Buttons/Button" data-node-id="1587:3374">
-                <p className="modal-clear-all-text">Clear all</p>
-              </button>
-              <button className="modal-search-button" data-name="Buttons/Button" data-node-id="1587:3375">
-                <p className="modal-search-button-text">Search</p>
+            <div className="modal-footer-actions" data-node-id="1554:3546">
+              <div className="modal-clear-all-wrapper">
+                <button 
+                  className="modal-clear-all-button" 
+                  onClick={handleClearAll}
+                  onMouseDown={handleClearAllMouseDown}
+                  type="button"
+                  data-name="Buttons/Button" 
+                  data-node-id="1554:3547"
+                >
+                  <p className="modal-clear-all-text" data-node-id="I1554:3547;3287:433397">Clear all</p>
+                </button>
+              </div>
+              <button className="modal-search-button" data-name="Buttons/Button" data-node-id="1554:3548">
+                <div className="modal-search-button-content" data-name="Text padding" data-node-id="I1554:3548;6421:273911">
+                  <p className="modal-search-button-text" data-node-id="I1554:3548;3287:432949">Search</p>
+                </div>
               </button>
             </div>
           </div>

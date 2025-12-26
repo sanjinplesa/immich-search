@@ -1,22 +1,28 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './DesignComponent.css';
 import searchIcon from '../assets/search-icon.svg';
-import frameIcon from '../assets/frame-icon.svg';
 import iconButtonsSvg from '../assets/icon-buttons.svg';
 import screenshotImage from '../assets/screenshot.png';
 import AdvancedSearchModal from './AdvancedSearchModal';
+import SearchSuggestionsDropdown from './SearchSuggestionsDropdown';
 
 type InputsProps = {
   className?: string;
   active?: "Active" | "Typing" | "Default" | "Active4";
+  value?: string;
+  onChange?: (value: string) => void;
 };
 
-const Inputs: React.FC<InputsProps> = ({ className }) => {
+const Inputs: React.FC<InputsProps> = ({ className, value: externalValue, onChange: externalOnChange }) => {
   const [isFocused, setIsFocused] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  const [value, setValue] = useState('');
+  const [internalValue, setInternalValue] = useState('');
   const [showCursor, setShowCursor] = useState(true);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Use external value if provided, otherwise use internal state
+  const value = externalValue !== undefined ? externalValue : internalValue;
+  const setValue = externalOnChange || setInternalValue;
 
   // Blinking cursor animation
   useEffect(() => {
@@ -47,7 +53,10 @@ const Inputs: React.FC<InputsProps> = ({ className }) => {
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setValue(e.target.value);
+    const newValue = e.target.value;
+    if (typeof setValue === 'function') {
+      setValue(newValue);
+    }
   };
 
   const handleClearMouseDown = (e: React.MouseEvent) => {
@@ -57,7 +66,9 @@ const Inputs: React.FC<InputsProps> = ({ className }) => {
 
   const handleClear = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setValue('');
+    if (typeof setValue === 'function') {
+      setValue('');
+    }
     // Keep focus after clearing
     setTimeout(() => {
       inputRef.current?.focus();
@@ -66,7 +77,9 @@ const Inputs: React.FC<InputsProps> = ({ className }) => {
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') {
-      setValue('');
+      if (typeof setValue === 'function') {
+        setValue('');
+      }
       inputRef.current?.blur();
     }
   };
@@ -93,15 +106,23 @@ const Inputs: React.FC<InputsProps> = ({ className }) => {
 
   const placeholderText = "Search photos by content, people, or metadata";
 
+  const handleSelectSuggestion = (suggestion: string) => {
+    if (typeof setValue === 'function') {
+      setValue(suggestion);
+    }
+    inputRef.current?.focus();
+  };
+
   return (
-    <div
-      className={`search-input-wrapper ${className || ''} search-state-${state.toLowerCase()}`}
-      onClick={handleWrapperClick}
-      onMouseEnter={() => !isFocused && setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      data-name={`Active=${state}`}
-      data-node-id={state === "Default" ? "1517:1429" : state === "Active" ? "1489:121" : state === "Typing" ? "1489:562" : "1563:2990"}
-    >
+    <div className={`search-input-container ${className || ''}`}>
+      <div
+        className={`search-input-wrapper search-state-${state.toLowerCase()}`}
+        onClick={handleWrapperClick}
+        onMouseEnter={() => !isFocused && setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        data-name={`Active=${state}`}
+        data-node-id={state === "Default" ? "1517:1429" : state === "Active" ? "1489:121" : state === "Typing" ? "1489:562" : "1563:2990"}
+      >
       {searchLg}
       
       <div className="search-input-content">
@@ -173,44 +194,19 @@ const Inputs: React.FC<InputsProps> = ({ className }) => {
         autoComplete="off"
         spellCheck="false"
       />
-    </div>
-  );
-};
-
-const AdvancedButton: React.FC<{ onOpenModal: () => void }> = ({ onOpenModal }) => {
-  const [isHovered, setIsHovered] = useState(false);
-  const [isActive, setIsActive] = useState(false);
-
-  const handleClick = () => {
-    setIsActive(!isActive);
-    onOpenModal();
-  };
-
-  const buttonState = isActive ? "active" : isHovered ? "hover" : "default";
-
-  return (
-    <div
-      className={`advanced-button-container advanced-button-${buttonState}`}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      onClick={handleClick}
-      data-name="Buttons/Button"
-      data-node-id={isActive ? "1605:3551" : "1605:3535"}
-    >
-      <div className="advanced-button-content" data-name="Text padding" data-node-id={isActive ? "1605:3553" : "1605:3537"}>
-        <div className="advanced-icon" data-name="Frame" data-node-id={isActive ? "1605:3554" : "1605:3538"}>
-          <img alt="" className="advanced-icon-img" src={frameIcon} />
-        </div>
-        <div className="advanced-text-wrapper" data-node-id={isActive ? "1605:3564" : "1605:3548"}>
-          <p className="advanced-text">Advanced</p>
-        </div>
       </div>
+      <SearchSuggestionsDropdown 
+        isVisible={state === "Active"} 
+        searchValue={value}
+        onSelectSuggestion={handleSelectSuggestion}
+      />
     </div>
   );
 };
 
 const DesignComponent: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState('');
 
   return (
     <div className="design-component" data-name="100" data-node-id="1563:3846">
@@ -229,15 +225,17 @@ const DesignComponent: React.FC = () => {
       <div className="header-bar" data-node-id="1563:3848" />
       
       {/* Search input */}
-      <Inputs className="search-input-positioned" />
-      
-      {/* Advanced button */}
-      <AdvancedButton onOpenModal={() => setIsModalOpen(true)} />
+      <Inputs 
+        className="search-input-positioned" 
+        value={searchValue}
+        onChange={setSearchValue}
+      />
       
       {/* Advanced Search Modal */}
       <AdvancedSearchModal 
         isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
+        onClose={() => setIsModalOpen(false)}
+        initialSearchValue={searchValue}
       />
     </div>
   );
