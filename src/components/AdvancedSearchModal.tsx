@@ -1,32 +1,52 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './AdvancedSearchModal.css';
+import './SearchSuggestionsDropdown.css';
 import searchIcon from '../assets/search-icon.svg';
 import closeXIcon from '../assets/close-x-icon.svg';
 import iconButtonsSvg from '../assets/icon-buttons.svg';
 import filterIcon from '../assets/filter-icon.svg';
 import arrowDownIcon from '../assets/arrow-down-icon.svg';
 import arrowRightIcon from '../assets/16f676d5be3442ecdd9228f68fac1693697db02a.svg';
+import photosIconDefault from '../assets/photos-icon-default.svg';
+import photosIconSelected from '../assets/photos-icon-selected.svg';
+import videoIconDefault from '../assets/video-icon-default.svg';
+import videoIconSelected from '../assets/video-icon-selected.svg';
+import dateCalendarIcon from '../assets/date-calendar-icon.svg';
+import dropdownChevronIcon from '../assets/dropdown-chevron-icon.svg';
 
 interface AdvancedSearchModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialSearchValue?: string;
+  onOpenAdvancedFilters?: () => void;
+  onOpenPeopleView?: () => void;
 }
 
-const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClose, initialSearchValue = '' }) => {
+const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClose, initialSearchValue = '', onOpenAdvancedFilters, onOpenPeopleView }) => {
   const [selectedType, setSelectedType] = useState<'all' | 'photos' | 'videos'>('photos');
   const [selectedFileType, setSelectedFileType] = useState<string>('all');
   const [selectedSearchIn, setSelectedSearchIn] = useState<string>('all');
   const [tags, setTags] = useState<string[]>(['beach', 'summer 2025']);
+  const [selectedPeople, setSelectedPeople] = useState<Set<string>>(new Set());
+  const [isFileTypesExpanded, setIsFileTypesExpanded] = useState(false);
 
-  // Random photos for people - using different seeds for variety
+  // People photos and names - matching SearchSuggestionsDropdown
   const peoplePhotos = [
     'https://i.pravatar.cc/150?img=12', // Oliver Thompson
     'https://i.pravatar.cc/150?img=47', // Sophia Martinez
     'https://i.pravatar.cc/150?img=33', // Liam Johnson
     'https://i.pravatar.cc/150?img=68', // Emma Williams
-    'https://i.pravatar.cc/150?img=15', // Unnamed 1
-    'https://i.pravatar.cc/150?img=32', // Unnamed 2
+    'https://i.pravatar.cc/150?img=15', // Noah Brown
+    'https://i.pravatar.cc/150?img=32', // Isabella Clark
+  ];
+
+  const people = [
+    'Oliver Thompson',
+    'Sophia Martinez',
+    'Liam Johnson',
+    'Emma Williams',
+    'Noah Brown',
+    'Isabella Clark',
   ];
   
   // Search input states
@@ -51,9 +71,23 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
     } else {
       // Reset justOpened when modal closes
       setJustOpened(true);
+      // Reset selected people when modal closes
+      setSelectedPeople(new Set());
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]); // Only depend on isOpen to preserve user input
+
+  const handleTogglePerson = (person: string) => {
+    setSelectedPeople(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(person)) {
+        newSet.delete(person);
+      } else {
+        newSet.add(person);
+      }
+      return newSet;
+    });
+  };
 
   // Blinking cursor animation
   useEffect(() => {
@@ -244,12 +278,12 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
             </div>
             <div className="modal-badges" data-node-id="1587:3312">
               <button 
-                className={`modal-badge ${selectedType === 'all' ? '' : 'modal-badge-default'}`}
+                className={`modal-badge ${selectedType === 'all' ? 'modal-badge-selected' : 'modal-badge-default'}`}
                 onClick={() => setSelectedType('all')}
                 data-name="Badge" 
                 data-node-id="1587:3313"
               >
-                <p className="modal-badge-text">All types</p>
+                <p className={selectedType === 'all' ? 'modal-badge-text-selected' : 'modal-badge-text'}>All types</p>
               </button>
               <button 
                 className={`modal-badge ${selectedType === 'photos' ? 'modal-badge-selected' : 'modal-badge-default'}`}
@@ -257,7 +291,12 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
                 data-name="Badge" 
                 data-node-id="1587:3314"
               >
-                <p className="modal-badge-text-selected">Photos</p>
+                <img 
+                  src={selectedType === 'photos' ? photosIconSelected : photosIconDefault} 
+                  alt="Photos" 
+                  className="modal-badge-icon"
+                />
+                <p className={selectedType === 'photos' ? 'modal-badge-text-selected' : 'modal-badge-text'}>Photos</p>
               </button>
               <button 
                 className={`modal-badge ${selectedType === 'videos' ? 'modal-badge-selected' : 'modal-badge-default'}`}
@@ -265,69 +304,63 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
                 data-name="Badge" 
                 data-node-id="1587:3315"
               >
-                <p className="modal-badge-text">Videos</p>
+                <img 
+                  src={selectedType === 'videos' ? videoIconSelected : videoIconDefault} 
+                  alt="Videos" 
+                  className="modal-badge-icon"
+                />
+                <p className={selectedType === 'videos' ? 'modal-badge-text-selected' : 'modal-badge-text'}>Videos</p>
               </button>
             </div>
           </div>
 
           {/* People Section */}
-          <div className="modal-section" data-name="margin" data-node-id="1587:3316">
-            <div className="modal-section-inner" data-name="Input field" data-node-id="1587:3317">
-              <div className="modal-label-wrapper" data-name="Label wrapper" data-node-id="1587:3318">
-                <p className="modal-label" data-node-id="1587:3319">People</p>
-              </div>
-              <div className="modal-people-grid" data-node-id="1587:3321">
-                <div className="modal-person-item" data-name="Component 6" data-node-id="1587:3322">
-                  <div className="modal-person-avatar" data-node-id="I1587:3322;1534:1737">
-                    <div className="modal-person-avatar-bg" />
-                    <img src={peoplePhotos[0]} alt="Oliver Thompson" className="modal-person-avatar-img" />
-                  </div>
-                  <p className="modal-person-name">Oliver Thompson</p>
-                </div>
-                <div className="modal-person-item modal-person-selected" data-node-id="1587:3323">
-                  <div className="modal-person-avatar" data-node-id="I1587:3323;1538:1945">
-                    <div className="modal-person-avatar-bg" />
-                    <img src={peoplePhotos[1]} alt="Sophia Martinez" className="modal-person-avatar-img" />
-                  </div>
-                  <p className="modal-person-name">Sophia Martinez</p>
-                </div>
-                <div className="modal-person-item" data-node-id="1587:3324">
-                  <div className="modal-person-avatar" data-node-id="I1587:3324;1534:1737">
-                    <div className="modal-person-avatar-bg" />
-                    <img src={peoplePhotos[2]} alt="Liam Johnson" className="modal-person-avatar-img" />
-                  </div>
-                  <p className="modal-person-name">Liam Johnson</p>
-                </div>
-                <div className="modal-person-item" data-node-id="1587:3325">
-                  <div className="modal-person-avatar" data-node-id="I1587:3325;1534:1737">
-                    <div className="modal-person-avatar-bg" />
-                    <img src={peoplePhotos[3]} alt="Emma Williams" className="modal-person-avatar-img" />
-                  </div>
-                  <p className="modal-person-name">Emma Williams</p>
-                </div>
-                <div className="modal-person-item" data-node-id="1587:3326">
-                  <div className="modal-person-avatar" data-node-id="I1587:3326;1534:1737">
-                    <div className="modal-person-avatar-bg" />
-                    <img src={peoplePhotos[4]} alt="Unnamed" className="modal-person-avatar-img" />
-                  </div>
-                  <p className="modal-person-name modal-person-name-unnamed">Unnamed</p>
-                </div>
-                <div className="modal-person-item" data-node-id="1587:3327">
-                  <div className="modal-person-avatar" data-node-id="I1587:3327;1534:1737">
-                    <div className="modal-person-avatar-bg" />
-                    <img src={peoplePhotos[5]} alt="Unnamed" className="modal-person-avatar-img" />
-                  </div>
-                  <p className="modal-person-name modal-person-name-unnamed">Unnamed</p>
-                </div>
-                <div className="modal-person-item modal-person-see-all" data-name="Component" data-selected="Selected3" data-node-id="1563:5040">
-                  <div className="modal-person-avatar modal-person-avatar-see-all" data-node-id="1563:5041">
-                    <div className="modal-person-avatar-bg-see-all" />
-                    <div className="modal-person-arrow" data-name="Arrow-Right--Streamline-Tabler" data-node-id="1563:5043">
-                      <img src={arrowRightIcon} alt="See all" className="modal-person-arrow-icon" />
+          <div className="search-suggestions-section" data-name="Input field" data-node-id="I1563:5129;1554:3472">
+            <div className="search-suggestions-label-wrapper" data-name="Label wrapper" data-node-id="I1563:5129;1554:3473">
+              <p className="search-suggestions-label" data-node-id="I1563:5129;1554:3474">People</p>
+            </div>
+            <div className="search-suggestions-people-grid" data-node-id="I1563:5129;1554:3476">
+              {people.map((person, index) => {
+                const isSelected = selectedPeople.has(person);
+                return (
+                  <div
+                    key={index}
+                    className={`search-suggestions-person-item ${isSelected ? 'search-suggestions-person-selected' : ''}`}
+                    data-name="Component 6"
+                    data-node-id="I1563:5129;1554:3477"
+                    onClick={() => handleTogglePerson(person)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <div className="search-suggestions-person-avatar" data-node-id="I1563:5129;1554:3477;1534:1737">
+                      <div className="search-suggestions-person-avatar-bg" />
+                      <img src={peoplePhotos[index]} alt={person} className="search-suggestions-person-avatar-img" />
+                      {isSelected && (
+                        <div className="search-suggestions-person-checkmark">
+                          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="10" cy="10" r="10" fill="#4250af"/>
+                            <path d="M6 10L9 13L14 7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </div>
+                      )}
                     </div>
+                    <p className="search-suggestions-person-name" data-node-id="I1563:5129;1554:3477;1534:1739">{person}</p>
                   </div>
-                  <p className="modal-person-name-see-all" data-node-id="1563:5042">See all</p>
+                );
+              })}
+              <div 
+                className="search-suggestions-person-item search-suggestions-person-see-all" 
+                data-name="Component" 
+                data-selected="Selected3"
+                onClick={onOpenPeopleView}
+                style={{ cursor: 'pointer' }}
+              >
+                <div className="search-suggestions-person-avatar search-suggestions-person-avatar-see-all">
+                  <div className="search-suggestions-person-avatar-bg-see-all" />
+                  <div className="search-suggestions-person-arrow">
+                    <img src={arrowRightIcon} alt="See all" className="search-suggestions-arrow-icon" />
+                  </div>
                 </div>
+                <p className="search-suggestions-person-name-see-all">See all</p>
               </div>
             </div>
           </div>
@@ -338,7 +371,9 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
               <p className="modal-label" data-node-id="1587:3331">Date</p>
               <div className="modal-date-input-wrapper" data-node-id="1587:3332">
                 <div className="modal-date-input" data-name="Badge" data-node-id="1587:3335">
+                  <img src={dateCalendarIcon} alt="Calendar" className="modal-date-icon" />
                   <p className="modal-date-text">Any date</p>
+                  <img src={dropdownChevronIcon} alt="Dropdown" className="modal-date-chevron" />
                 </div>
               </div>
             </div>
@@ -378,7 +413,10 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
                   >
                     <p className={selectedFileType === 'all' ? 'modal-file-type-text-selected' : 'modal-file-type-text'}>All</p>
                   </button>
-                  {['.jpeg', '.png', '.heic', '.webp', '.gif', '.raw', '.tiff'].map((type) => (
+                  {(isFileTypesExpanded 
+                    ? ['.jpeg', '.png', '.heic', '.webp', '.gif', '.raw', '.tiff', '.bmp', '.avif', '.jxl', '.heif', '.svg', '.psd', '.jp2', '.rw2']
+                    : ['.jpeg', '.png', '.heic', '.webp', '.gif', '.raw', '.tiff']
+                  ).map((type) => (
                     <button
                       key={type}
                       className={`modal-file-type-badge ${selectedFileType === type ? 'modal-file-type-selected' : ''}`}
@@ -389,10 +427,19 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
                     </button>
                   ))}
                 </div>
-                <button className="modal-see-more-button" data-name="Badge" data-node-id="I1587:3348;1554:2534">
-                  <p className="modal-see-more-text">See more</p>
-                  <div className="modal-see-more-icon">→</div>
-                </button>
+                {!isFileTypesExpanded && (
+                  <button 
+                    className="modal-see-more-button" 
+                    data-name="Badge" 
+                    data-node-id="I1587:3348;1554:2534"
+                    onClick={() => setIsFileTypesExpanded(true)}
+                  >
+                    <p className="modal-see-more-text">see more</p>
+                    <div className="modal-see-more-icon">
+                      <img src={arrowDownIcon} alt="See more" className="modal-see-more-icon-img" />
+                    </div>
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -462,18 +509,6 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
               </div>
             </div>
             <div className="modal-footer-actions" data-node-id="1554:3546">
-              <div className="modal-clear-all-wrapper">
-                <button 
-                  className="modal-clear-all-button" 
-                  onClick={handleClearAll}
-                  onMouseDown={handleClearAllMouseDown}
-                  type="button"
-                  data-name="Buttons/Button" 
-                  data-node-id="1554:3547"
-                >
-                  <p className="modal-clear-all-text" data-node-id="I1554:3547;3287:433397">Clear all</p>
-                </button>
-              </div>
               <button className="modal-search-button" data-name="Buttons/Button" data-node-id="1554:3548">
                 <div className="modal-search-button-content" data-name="Text padding" data-node-id="I1554:3548;6421:273911">
                   <p className="modal-search-button-text" data-node-id="I1554:3548;3287:432949">Search</p>

@@ -5,6 +5,7 @@ import iconButtonsSvg from '../assets/icon-buttons.svg';
 import screenshotImage from '../assets/screenshot.png';
 import AdvancedSearchModal from './AdvancedSearchModal';
 import SearchSuggestionsDropdown from './SearchSuggestionsDropdown';
+import PeopleViewModal from './PeopleViewModal';
 
 type InputsProps = {
   className?: string;
@@ -13,7 +14,12 @@ type InputsProps = {
   onChange?: (value: string) => void;
 };
 
-const Inputs: React.FC<InputsProps> = ({ className, value: externalValue, onChange: externalOnChange }) => {
+type InputsPropsWithAdvanced = InputsProps & {
+  onOpenAdvancedFilters?: () => void;
+  onOpenPeopleView?: () => void;
+};
+
+const Inputs: React.FC<InputsPropsWithAdvanced> = ({ className, value: externalValue, onChange: externalOnChange, onOpenAdvancedFilters, onOpenPeopleView }) => {
   const [isFocused, setIsFocused] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [internalValue, setInternalValue] = useState('');
@@ -199,6 +205,8 @@ const Inputs: React.FC<InputsProps> = ({ className, value: externalValue, onChan
         isVisible={state === "Active"} 
         searchValue={value}
         onSelectSuggestion={handleSelectSuggestion}
+        onOpenAdvancedFilters={onOpenAdvancedFilters}
+        onOpenPeopleView={onOpenPeopleView}
       />
     </div>
   );
@@ -206,7 +214,17 @@ const Inputs: React.FC<InputsProps> = ({ className, value: externalValue, onChan
 
 const DesignComponent: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAdvancedFiltersModalOpen, setIsAdvancedFiltersModalOpen] = useState(false);
+  const [isPeopleViewModalOpen, setIsPeopleViewModalOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
+
+  const handleOpenAdvancedFilters = () => {
+    setIsAdvancedFiltersModalOpen(true);
+  };
+
+  const handleOpenPeopleView = () => {
+    setIsPeopleViewModalOpen(true);
+  };
 
   return (
     <div className="design-component" data-name="100" data-node-id="1563:3846">
@@ -229,6 +247,8 @@ const DesignComponent: React.FC = () => {
         className="search-input-positioned" 
         value={searchValue}
         onChange={setSearchValue}
+        onOpenAdvancedFilters={handleOpenAdvancedFilters}
+        onOpenPeopleView={handleOpenPeopleView}
       />
       
       {/* Advanced Search Modal */}
@@ -236,6 +256,23 @@ const DesignComponent: React.FC = () => {
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)}
         initialSearchValue={searchValue}
+        onOpenAdvancedFilters={handleOpenAdvancedFilters}
+        onOpenPeopleView={handleOpenPeopleView}
+      />
+      
+      {/* Full Advanced Filters Modal */}
+      <AdvancedSearchModal 
+        isOpen={isAdvancedFiltersModalOpen} 
+        onClose={() => setIsAdvancedFiltersModalOpen(false)}
+        initialSearchValue={searchValue}
+        onOpenAdvancedFilters={handleOpenAdvancedFilters}
+        onOpenPeopleView={handleOpenPeopleView}
+      />
+      
+      {/* People View Modal */}
+      <PeopleViewModal 
+        isOpen={isPeopleViewModalOpen} 
+        onClose={() => setIsPeopleViewModalOpen(false)}
       />
     </div>
   );

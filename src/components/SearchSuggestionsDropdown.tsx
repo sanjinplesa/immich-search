@@ -12,9 +12,11 @@ interface SearchSuggestionsDropdownProps {
   isVisible: boolean;
   searchValue?: string;
   onSelectSuggestion?: (suggestion: string) => void;
+  onOpenAdvancedFilters?: () => void;
+  onOpenPeopleView?: () => void;
 }
 
-const SearchSuggestionsDropdown: React.FC<SearchSuggestionsDropdownProps> = ({ isVisible, searchValue = '', onSelectSuggestion }) => {
+const SearchSuggestionsDropdown: React.FC<SearchSuggestionsDropdownProps> = ({ isVisible, searchValue = '', onSelectSuggestion, onOpenAdvancedFilters, onOpenPeopleView }) => {
   const [recentSearches, setRecentSearches] = useState([
     { id: 1, text: 'beach', selected: false },
     { id: 2, text: 'emma', selected: false },
@@ -27,7 +29,7 @@ const SearchSuggestionsDropdown: React.FC<SearchSuggestionsDropdownProps> = ({ i
     'https://i.pravatar.cc/150?img=33', // Liam Johnson
     'https://i.pravatar.cc/150?img=68', // Emma Williams
     'https://i.pravatar.cc/150?img=15', // Noah Brown
-    'https://i.pravatar.cc/150?img=32', // Ava Davis
+    'https://i.pravatar.cc/150?img=32', // Isabella Clark
   ];
 
   const people = [
@@ -36,7 +38,7 @@ const SearchSuggestionsDropdown: React.FC<SearchSuggestionsDropdownProps> = ({ i
     'Liam Johnson',
     'Emma Williams',
     'Noah Brown',
-    'Ava Davis',
+    'Isabella Clark',
   ];
 
   const handleRemoveRecent = (id: number, e: React.MouseEvent) => {
@@ -75,14 +77,15 @@ const SearchSuggestionsDropdown: React.FC<SearchSuggestionsDropdownProps> = ({ i
             <div className="search-suggestions-section" data-node-id="I1563:5129;1563:8192">
               <div className="search-suggestions-header" data-node-id="I1563:5129;1563:8193">
                 <p className="search-suggestions-title" data-node-id="I1563:5129;1563:8194">Recent searches</p>
-                <div 
+                <button 
+                  type="button"
                   className="search-suggestions-clear" 
                   onClick={(e) => handleClearAll(e)}
                   onMouseDown={handleClearAllMouseDown}
                   data-node-id="I1563:5129;1563:8195"
                 >
                   <p className="search-suggestions-clear-text">Clear</p>
-                </div>
+                </button>
               </div>
               <div className="search-suggestions-list" data-node-id="I1563:5129;1563:8350">
                 {recentSearches.map((search) => (
@@ -150,7 +153,13 @@ const SearchSuggestionsDropdown: React.FC<SearchSuggestionsDropdownProps> = ({ i
                 <p className="search-suggestions-person-name" data-node-id="I1563:5129;1554:3477;1534:1739">{person}</p>
               </div>
             ))}
-            <div className="search-suggestions-person-item search-suggestions-person-see-all" data-name="Component" data-selected="Selected3">
+            <div 
+              className="search-suggestions-person-item search-suggestions-person-see-all" 
+              data-name="Component" 
+              data-selected="Selected3"
+              onClick={onOpenPeopleView}
+              style={{ cursor: 'pointer' }}
+            >
               <div className="search-suggestions-person-avatar search-suggestions-person-avatar-see-all">
                 <div className="search-suggestions-person-avatar-bg-see-all" />
                 <div className="search-suggestions-person-arrow">
@@ -166,7 +175,13 @@ const SearchSuggestionsDropdown: React.FC<SearchSuggestionsDropdownProps> = ({ i
       {/* Footer */}
       <div className="search-suggestions-footer" data-node-id="I1563:5129;1554:3531">
         <div className="search-suggestions-footer-content" data-node-id="I1563:5129;1554:3532">
-          <div className="search-suggestions-show-more" data-name="Buttons/Button" data-node-id="1605:3965">
+          <div 
+            className="search-suggestions-show-more" 
+            data-name="Buttons/Button" 
+            data-node-id="1605:3965"
+            onClick={onOpenAdvancedFilters}
+            style={{ cursor: 'pointer' }}
+          >
             <div className="search-suggestions-show-more-content" data-name="Text padding" data-node-id="1605:3967">
               <div className="search-suggestions-show-more-filter-icon" data-name="Frame" data-node-id="1605:3968">
                 <img alt="" className="search-suggestions-show-more-filter-icon-img" src={filterIcon} />
@@ -184,15 +199,6 @@ const SearchSuggestionsDropdown: React.FC<SearchSuggestionsDropdownProps> = ({ i
             </div>
           </div>
           <div className="search-suggestions-footer-actions" data-node-id="I1563:5129;1554:3546">
-            <div className="search-suggestions-clear-all-wrapper">
-              <div 
-                className={`search-suggestions-clear-all-button ${isSearchValueEmpty ? 'search-suggestions-button-disabled' : ''}`}
-                data-name="Buttons/Button" 
-                data-node-id="1554:3547"
-              >
-                <p className="search-suggestions-clear-all-text" data-node-id="I1554:3547;3287:433397">Clear all</p>
-              </div>
-            </div>
             <div 
               className={`search-suggestions-search-button ${isSearchValueEmpty ? 'search-suggestions-button-disabled' : ''}`}
               data-name="Buttons/Button" 
