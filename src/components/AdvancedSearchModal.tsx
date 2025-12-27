@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './AdvancedSearchModal.css';
 import './SearchSuggestionsDropdown.css';
+import './DesignComponent.css';
 import searchIcon from '../assets/search-icon.svg';
 import closeXIcon from '../assets/close-x-icon.svg';
 import iconButtonsSvg from '../assets/icon-buttons.svg';
@@ -14,7 +15,9 @@ import videoIconSelected from '../assets/video-icon-selected.svg';
 import dateCalendarIcon from '../assets/date-calendar-icon.svg';
 import dropdownChevronIcon from '../assets/dropdown-chevron-icon.svg';
 import locationIcon from '../assets/location-icon.svg';
+import cameraIcon from '../assets/camera-icon.svg';
 import clearIcon from '../assets/clear-icon.svg';
+import tagIcon from '../assets/tag-icon.svg';
 
 interface AdvancedSearchModalProps {
   isOpen: boolean;
@@ -252,6 +255,24 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
   const [isCameraDropdownOpen, setIsCameraDropdownOpen] = useState(false);
   const [selectedCamera, setSelectedCamera] = useState<string>('Any camera');
 
+  // Tags input states
+  const [tagInputValue, setTagInputValue] = useState<string>('');
+  const [isTagInputFocused, setIsTagInputFocused] = useState(false);
+  const [tagSuggestions, setTagSuggestions] = useState<string[]>([]);
+  const [isTagsSingleRow, setIsTagsSingleRow] = useState(true);
+  const tagInputRef = useRef<HTMLInputElement>(null);
+  const tagsListRef = useRef<HTMLDivElement>(null);
+
+  // Tag suggestions - matching Figma design
+  const allTagSuggestions = [
+    'summer 2025',
+    'holiday',
+    'Expedition into nature\'s wonders',
+    'Pursuit of excitement',
+    'Companions on a quest',
+    'Exploring fresh vistas',
+  ];
+
   // People photos and names - matching SearchSuggestionsDropdown
   const peoplePhotos = [
     'https://i.pravatar.cc/150?img=12', // Oliver Thompson
@@ -313,7 +334,6 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
   const [isFocused, setIsFocused] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [searchValue, setSearchValue] = useState(initialSearchValue);
-  const [showCursor, setShowCursor] = useState(true);
   const [justOpened, setJustOpened] = useState(true);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -337,6 +357,9 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
       setIsDateDropdownOpen(false);
       // Close camera dropdown when modal closes
       setIsCameraDropdownOpen(false);
+      // Close tag suggestions when modal closes
+      setIsTagInputFocused(false);
+      setTagSuggestions([]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]); // Only depend on isOpen to preserve user input
@@ -379,6 +402,26 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
     }
   }, [isCameraDropdownOpen]);
 
+  // Close tag suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (isTagInputFocused) {
+        const target = event.target as HTMLElement;
+        if (!target.closest('.modal-tags-input-wrapper')) {
+          setIsTagInputFocused(false);
+          setTagSuggestions([]);
+        }
+      }
+    };
+
+    if (isTagInputFocused) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [isTagInputFocused]);
+
   const handleTogglePerson = (person: string) => {
     setSelectedPeople(prev => {
       const newSet = new Set(prev);
@@ -391,22 +434,131 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
     });
   };
 
-  // Blinking cursor animation
+
+  // Detect if tags are in single row or multiple rows
   useEffect(() => {
-    if (isFocused) {
-      const interval = setInterval(() => {
-        setShowCursor(prev => !prev);
-      }, 530);
-      return () => clearInterval(interval);
+    if (tagsListRef.current && tags.length > 0) {
+      const checkRows = () => {
+        const tagsList = tagsListRef.current;
+        if (tagsList && tagsList.children.length > 0) {
+          // Get the first and last tag elements
+          const firstTag = tagsList.children[0] as HTMLElement;
+          const lastTag = tagsList.children[tagsList.children.length - 1] as HTMLElement;
+          
+          // If first and last tag are on the same row, they'll have the same offsetTop
+          const isSingleRow = firstTag.offsetTop === lastTag.offsetTop;
+          setIsTagsSingleRow(isSingleRow);
+        }
+      };
+      
+      // Check immediately and after a short delay to account for layout
+      checkRows();
+      const timeout = setTimeout(checkRows, 10);
+      return () => clearTimeout(timeout);
     } else {
-      setShowCursor(false);
+      setIsTagsSingleRow(true);
     }
-  }, [isFocused]);
+  }, [tags, isTagInputFocused]);
 
   if (!isOpen) return null;
 
   const handleRemoveTag = (tagToRemove: string) => {
     setTags(tags.filter(tag => tag !== tagToRemove));
+  };
+
+  // Tag input handlers
+  const handleTagInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setTagInputValue(value);
+    
+    // Only show suggestions when user starts typing
+    if (value.trim()) {
+      const filtered = allTagSuggestions.filter(suggestion =>
+        suggestion.toLowerCase().includes(value.toLowerCase()) &&
+        !tags.includes(suggestion)
+      );
+      setTagSuggestions(filtered);
+    } else {
+      // Clear suggestions when input is empty
+      setTagSuggestions([]);
+    }
+  };
+
+  const handleTagInputFocus = () => {
+    setIsTagInputFocused(true);
+    // Don't show suggestions on focus - only show when user starts typing
+    // Let the browser handle cursor position naturally
+  };
+
+  const handleTagInputBlur = () => {
+    setTimeout(() => {
+      if (document.activeElement !== tagInputRef.current && 
+          !document.activeElement?.closest('.modal-tag-suggestions')) {
+        setIsTagInputFocused(false);
+        setTagSuggestions([]);
+      }
+    }, 200);
+  };
+
+  const handleTagInputKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && tagInputValue.trim()) {
+      e.preventDefault();
+      const newTag = tagInputValue.trim();
+      if (!tags.includes(newTag)) {
+        setTags([...tags, newTag]);
+      }
+      setTagInputValue('');
+      setTagSuggestions([]);
+    } else if (e.key === 'Backspace' && tagInputValue === '' && tags.length > 0) {
+      // Remove last tag on backspace when input is empty
+      setTags(tags.slice(0, -1));
+    } else if (e.key === 'Escape') {
+      setTagInputValue('');
+      setTagSuggestions([]);
+      tagInputRef.current?.blur();
+    }
+  };
+
+  const handleTagSuggestionSelect = (suggestion: string, e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+    if (!tags.includes(suggestion)) {
+      setTags([...tags, suggestion]);
+    }
+    setTagInputValue('');
+    setTagSuggestions([]);
+    setTimeout(() => {
+      if (tagInputRef.current) {
+        tagInputRef.current.focus();
+        tagInputRef.current.setSelectionRange(0, 0);
+      }
+    }, 0);
+  };
+
+  const handleTagInputWrapperClick = (e: React.MouseEvent) => {
+    if (!(e.target as HTMLElement).closest('.modal-tag-close')) {
+      // Only focus if clicking on the input area, not on tags
+      const target = e.target as HTMLElement;
+      if (target.closest('.modal-tags-content') || target.closest('.modal-tags-placeholder-container')) {
+        setTimeout(() => {
+          if (tagInputRef.current) {
+            tagInputRef.current.focus();
+            // Let the browser handle cursor position based on click location
+          }
+        }, 0);
+      } else {
+        // If clicking elsewhere in the input, focus and position cursor at end
+        setTimeout(() => {
+          if (tagInputRef.current) {
+            tagInputRef.current.focus();
+            const length = tagInputRef.current.value.length;
+            tagInputRef.current.setSelectionRange(length, length);
+          }
+        }, 0);
+      }
+    }
   };
 
   const handleSearchWrapperClick = (e: React.MouseEvent) => {
@@ -558,7 +710,6 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
                 <>
                   <div className="modal-search-text-typing">
                     <p className="modal-search-typed-text">{searchValue}</p>
-                    {isFocused && showCursor && <span className="modal-search-cursor">|</span>}
                   </div>
                   <div 
                     className="modal-search-clear-button" 
@@ -569,20 +720,13 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
                   </div>
                 </>
               ) : (
-                <div className="modal-search-text-wrapper" data-node-id="1587:3304">
-                  {searchState === "Active" ? (
-                    <div className="modal-search-text-content" data-node-id="1587:3305">
-                      {showCursor && <span className="modal-search-cursor">|</span>}
-                      <div className="modal-search-placeholder" data-node-id="1587:3307">
-                        <p>{placeholderText}</p>
-                      </div>
-                    </div>
-                  ) : (
+                !isFocused && (
+                  <div className="modal-search-text-wrapper" data-node-id="1587:3304">
                     <div className="modal-search-placeholder" data-node-id="1587:3307">
                       <p>{placeholderText}</p>
                     </div>
-                  )}
-                </div>
+                  </div>
+                )
               )}
             </div>
             <input
@@ -708,7 +852,7 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
               <p className="modal-label" data-node-id="1587:3331">Date</p>
               <div className="modal-date-input-wrapper" data-node-id="1587:3332">
                 <div 
-                  className="modal-date-input" 
+                  className={`modal-date-input ${isDateDropdownOpen ? 'modal-date-input-focused' : ''}`}
                   data-name="Badge" 
                   data-node-id="1587:3335"
                   onClick={() => setIsDateDropdownOpen(!isDateDropdownOpen)}
@@ -738,7 +882,7 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
           <div className="modal-section" data-node-id="1587:3336">
             <p className="modal-label" data-node-id="1587:3337">Location</p>
             <div className="modal-location-input-wrapper" data-node-id="1587:3338">
-              <div className="modal-location-input" data-name="Badge" data-node-id="1587:3341">
+              <div className={`modal-location-input ${isLocationFocused ? 'modal-location-input-focused' : ''}`} data-name="Badge" data-node-id="1587:3341">
                 <img src={locationIcon} alt="Location" className="modal-location-icon" />
                 <input
                   ref={locationInputRef}
@@ -786,13 +930,13 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
               <p className="modal-label" data-node-id="1587:3343">Camera</p>
               <div className="modal-camera-input-wrapper" data-node-id="1587:3344">
                 <div 
-                  className="modal-camera-input" 
+                  className={`modal-camera-input ${isCameraDropdownOpen ? 'modal-camera-input-focused' : ''}`}
                   data-name="Badge" 
                   data-node-id="1587:3347"
                   onClick={() => setIsCameraDropdownOpen(!isCameraDropdownOpen)}
                   style={{ cursor: 'pointer' }}
                 >
-                  <span style={{ fontSize: '18px' }}>📷</span>
+                  <img src={cameraIcon} alt="Camera" className="modal-camera-icon" />
                   <p className="modal-camera-text">{selectedCamera}</p>
                   <img src={dropdownChevronIcon} alt="Dropdown" className="modal-camera-chevron" />
                 </div>
@@ -880,21 +1024,96 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
             <div className="modal-label-wrapper" data-name="Label wrapper" data-node-id="I1587:3362;1551:3285">
               <p className="modal-label" data-node-id="I1587:3362;1551:3286">Tags</p>
             </div>
-            <div className="modal-tags-container" data-node-id="I1587:3362;1551:3288">
-              <div className="modal-tags-input" data-name="Input" data-node-id="I1587:3362;1551:3289">
-                <div className="modal-tags-content" data-name="Content" data-node-id="I1587:3362;1551:3298">
-                  <p className="modal-tags-placeholder">Type to add tags</p>
-                </div>
-                <div className="modal-tags-list" data-node-id="I1587:3362;1551:3343">
-                  {tags.map((tag) => (
-                    <div key={tag} className="modal-tag" data-name="Tag" data-node-id="I1587:3362;1551:3344">
-                      <p className="modal-tag-text">{tag}</p>
-                      <div className="modal-tag-close" onClick={() => handleRemoveTag(tag)} data-name="_Tag close X">
-                        <div className="modal-tag-close-icon" data-name="x-close">×</div>
+            <div className={`modal-tags-container ${tags.length > 0 ? 'modal-tags-container-with-tags' : ''}`} data-node-id="I1587:3362;1551:3288">
+              <div className={`modal-tags-input-wrapper ${isTagInputFocused ? 'modal-tags-input-wrapper-focused' : ''}`}>
+                <div 
+                  className={`modal-tags-input ${isTagInputFocused ? 'modal-tags-input-focused' : ''} ${tags.length > 0 ? 'modal-tags-input-with-tags' : ''} ${isTagInputFocused && tagSuggestions.length > 0 ? 'modal-tags-input-adding' : ''} ${tags.length > 0 && isTagInputFocused && isTagsSingleRow ? 'modal-tags-single-row' : ''}`}
+                  data-name="Input" 
+                  data-node-id="I1587:3362;1551:3289"
+                  onClick={handleTagInputWrapperClick}
+                >
+                  {!tagInputValue && (
+                    <div className="modal-tags-content" data-name="Content" data-node-id="I1587:3362;1551:3298">
+                      <div className="modal-tags-placeholder-container">
+                        <p className="modal-tags-placeholder">Type to add tags</p>
                       </div>
                     </div>
-                  ))}
+                  )}
+                  {tags.length > 0 && (
+                    <div ref={tagsListRef} className="modal-tags-list" data-node-id="I1587:3362;1551:3343">
+                      {tags.map((tag) => (
+                        <div key={tag} className="search-person-chip" data-name="Tag" data-node-id="I1587:3362;1551:3344">
+                          <div className="search-person-chip-content" data-name="Content" data-node-id="I1587:3362;1551:3344;3309:406970">
+                            <p className="search-person-chip-text" data-node-id="I1587:3362;1551:3344;3307:418119">
+                              {tag}
+                            </p>
+                          </div>
+                          <div 
+                            className="search-person-chip-close" 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRemoveTag(tag);
+                            }}
+                            onMouseDown={(e) => {
+                              e.stopPropagation();
+                              e.preventDefault();
+                            }}
+                            data-name="_Tag close X" 
+                            data-node-id="I1587:3362;1551:3344;3307:418120"
+                          >
+                            <div className="search-person-chip-close-icon" data-name="x-close" data-node-id="I1587:3362;1551:3344;3307:418120;3307:417860">
+                              <div className="search-person-chip-close-icon-inner" data-name="Icon" data-node-id="I1587:3362;1551:3344;3307:418120;3307:417860;3463:405166">
+                                <div className="search-person-chip-close-icon-vector" style={{ "--stroke-0": "rgba(255, 255, 255, 1)" } as React.CSSProperties}>
+                                  <img alt="" className="search-person-chip-close-icon-img" src={closeXIcon} />
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <input
+                    ref={tagInputRef}
+                    type="text"
+                    value={tagInputValue}
+                    onChange={handleTagInputChange}
+                    onFocus={handleTagInputFocus}
+                    onBlur={handleTagInputBlur}
+                    onKeyDown={handleTagInputKeyDown}
+                    onClick={(e) => e.stopPropagation()}
+                    className="modal-tags-input-hidden"
+                    aria-label="Add tags"
+                    autoComplete="off"
+                    spellCheck="false"
+                  />
                 </div>
+                {isTagInputFocused && tagSuggestions.length > 0 && (
+                  <div className="modal-tag-suggestions">
+                    <div className="modal-tag-suggestions-list">
+                      {tagSuggestions.map((suggestion, index) => (
+                        <React.Fragment key={index}>
+                          <div
+                            className="modal-tag-suggestion-item"
+                            onClick={(e) => handleTagSuggestionSelect(suggestion, e)}
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                            }}
+                          >
+                            <div className="modal-tag-suggestion-icon">
+                              <img src={tagIcon} alt="Tag" className="modal-tag-suggestion-icon-img" />
+                            </div>
+                            <p className="modal-tag-suggestion-text">{suggestion}</p>
+                          </div>
+                          {index < tagSuggestions.length - 1 && (
+                            <div className="modal-tag-suggestion-divider"></div>
+                          )}
+                        </React.Fragment>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

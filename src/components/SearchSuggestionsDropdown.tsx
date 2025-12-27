@@ -13,9 +13,11 @@ interface SearchSuggestionsDropdownProps {
   onSelectSuggestion?: (suggestion: string) => void;
   onOpenAdvancedFilters?: () => void;
   onOpenPeopleView?: () => void;
+  selectedPeople?: string[];
+  onTogglePerson?: (person: string) => void;
 }
 
-const SearchSuggestionsDropdown: React.FC<SearchSuggestionsDropdownProps> = ({ isVisible, searchValue = '', onSelectSuggestion, onOpenAdvancedFilters, onOpenPeopleView }) => {
+const SearchSuggestionsDropdown: React.FC<SearchSuggestionsDropdownProps> = ({ isVisible, searchValue = '', onSelectSuggestion, onOpenAdvancedFilters, onOpenPeopleView, selectedPeople = [], onTogglePerson }) => {
   const [recentSearches, setRecentSearches] = useState([
     { id: 1, text: 'beach', selected: false },
     { id: 2, text: 'emma', selected: false },
@@ -59,6 +61,15 @@ const SearchSuggestionsDropdown: React.FC<SearchSuggestionsDropdownProps> = ({ i
   const handleSelectSuggestion = (text: string) => {
     if (onSelectSuggestion) {
       onSelectSuggestion(text);
+    }
+  };
+
+  const handleTogglePerson = (person: string, e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+    }
+    if (onTogglePerson) {
+      onTogglePerson(person);
     }
   };
 
@@ -137,21 +148,33 @@ const SearchSuggestionsDropdown: React.FC<SearchSuggestionsDropdownProps> = ({ i
             <p className="search-suggestions-label" data-node-id="I1563:5129;1554:3474">People</p>
           </div>
           <div className="search-suggestions-people-grid" data-node-id="I1563:5129;1554:3476">
-            {people.slice(0, 5).map((person, index) => (
-              <div
-                key={index}
-                className="search-suggestions-person-item"
-                onClick={() => handleSelectSuggestion(person)}
-                data-name="Component 6"
-                data-node-id="I1563:5129;1554:3477"
-              >
-                <div className="search-suggestions-person-avatar" data-node-id="I1563:5129;1554:3477;1534:1737">
-                  <div className="search-suggestions-person-avatar-bg" />
-                  <img src={peoplePhotos[index]} alt={person} className="search-suggestions-person-avatar-img" />
+            {people.slice(0, 5).map((person, index) => {
+              const isSelected = selectedPeople.includes(person);
+              return (
+                <div
+                  key={index}
+                  className={`search-suggestions-person-item ${isSelected ? 'search-suggestions-person-selected' : ''}`}
+                  onClick={(e) => handleTogglePerson(person, e)}
+                  data-name="Component 6"
+                  data-node-id="I1563:5129;1554:3477"
+                  style={{ cursor: 'pointer' }}
+                >
+                  <div className="search-suggestions-person-avatar" data-node-id="I1563:5129;1554:3477;1534:1737">
+                    <div className="search-suggestions-person-avatar-bg" />
+                    <img src={peoplePhotos[index]} alt={person} className="search-suggestions-person-avatar-img" />
+                    {isSelected && (
+                      <div className="search-suggestions-person-checkmark">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <circle cx="10" cy="10" r="10" fill="#4250af"/>
+                          <path d="M6 10L9 13L14 7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                  <p className="search-suggestions-person-name" data-node-id="I1563:5129;1554:3477;1534:1739">{person}</p>
                 </div>
-                <p className="search-suggestions-person-name" data-node-id="I1563:5129;1554:3477;1534:1739">{person}</p>
-              </div>
-            ))}
+              );
+            })}
             <div 
               className="search-suggestions-person-item search-suggestions-person-see-all" 
               data-name="Component" 
