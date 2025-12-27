@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import './SearchSuggestionsDropdown.css';
 import clockIcon from '../assets/clock-icon.svg';
-import clockIcon2 from '../assets/clock-icon-2.svg';
 import closeXGray from '../assets/close-x-gray.svg';
 import dividerLine from '../assets/divider-line.svg';
 import arrowDownIcon from '../assets/arrow-down-icon.svg';
@@ -138,7 +137,7 @@ const SearchSuggestionsDropdown: React.FC<SearchSuggestionsDropdownProps> = ({ i
             <p className="search-suggestions-label" data-node-id="I1563:5129;1554:3474">People</p>
           </div>
           <div className="search-suggestions-people-grid" data-node-id="I1563:5129;1554:3476">
-            {people.map((person, index) => (
+            {people.slice(0, 5).map((person, index) => (
               <div
                 key={index}
                 className="search-suggestions-person-item"

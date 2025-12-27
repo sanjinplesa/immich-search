@@ -13,6 +13,8 @@ import videoIconDefault from '../assets/video-icon-default.svg';
 import videoIconSelected from '../assets/video-icon-selected.svg';
 import dateCalendarIcon from '../assets/date-calendar-icon.svg';
 import dropdownChevronIcon from '../assets/dropdown-chevron-icon.svg';
+import locationIcon from '../assets/location-icon.svg';
+import clearIcon from '../assets/clear-icon.svg';
 
 interface AdvancedSearchModalProps {
   isOpen: boolean;
@@ -22,6 +24,216 @@ interface AdvancedSearchModalProps {
   onOpenPeopleView?: () => void;
 }
 
+interface DatePickerMenuProps {
+  selectedDate: string;
+  onSelectDate: (date: string) => void;
+  onClose: () => void;
+  calendarDate: Date;
+  onCalendarDateChange: (date: Date) => void;
+}
+
+const DatePickerMenu: React.FC<DatePickerMenuProps> = ({ 
+  selectedDate, 
+  onSelectDate, 
+  onClose,
+  calendarDate,
+  onCalendarDateChange
+}) => {
+  const datePresets = [
+    'Today',
+    'Yesterday',
+    'This week',
+    'Last week',
+    'This month',
+    'Last month',
+    'This year',
+    'Last year',
+    'Any date'
+  ];
+
+  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+    'July', 'August', 'September', 'October', 'November', 'December'];
+  const dayNames = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
+
+  const getDaysInMonth = (date: Date) => {
+    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  };
+
+  const getFirstDayOfMonth = (date: Date) => {
+    const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
+    return (firstDay.getDay() + 6) % 7; // Convert Sunday (0) to 6, Monday (0) to 0
+  };
+
+  const handlePreviousMonth = () => {
+    const newDate = new Date(calendarDate);
+    newDate.setMonth(newDate.getMonth() - 1);
+    onCalendarDateChange(newDate);
+  };
+
+  const handleNextMonth = () => {
+    const newDate = new Date(calendarDate);
+    newDate.setMonth(newDate.getMonth() + 1);
+    onCalendarDateChange(newDate);
+  };
+
+  const renderCalendarDays = () => {
+    const daysInMonth = getDaysInMonth(calendarDate);
+    const firstDay = getFirstDayOfMonth(calendarDate);
+    type DayItem = number | { day: number; isPrevMonth?: boolean; isNextMonth?: boolean };
+    const days: DayItem[] = [];
+
+    // Get previous month's last days
+    const prevMonth = new Date(calendarDate.getFullYear(), calendarDate.getMonth(), 0);
+    const prevMonthDays = prevMonth.getDate();
+    
+    // Add previous month's days
+    for (let i = firstDay - 1; i >= 0; i--) {
+      days.push({ day: prevMonthDays - i, isPrevMonth: true });
+    }
+
+    // Add days of the current month
+    for (let day = 1; day <= daysInMonth; day++) {
+      days.push(day);
+    }
+
+    // Add next month's days to fill the grid
+    const remainingCells = 42 - days.length;
+    for (let day = 1; day <= remainingCells; day++) {
+      days.push({ day, isNextMonth: true });
+    }
+
+    return days;
+  };
+
+  const handleApply = () => {
+    onClose();
+  };
+
+  const handleCancel = () => {
+    onClose();
+  };
+
+  return (
+    <div className="date-picker-menu" onClick={(e) => e.stopPropagation()}>
+      <div className="date-picker-content">
+        {/* Left Panel - Date Presets */}
+        <div className="date-picker-presets">
+          {datePresets.map((preset) => (
+            <div
+              key={preset}
+              className={`date-picker-preset-item ${selectedDate === preset ? 'date-picker-preset-selected' : ''}`}
+              onClick={() => onSelectDate(preset)}
+            >
+              <p>{preset}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Right Panel - Calendar */}
+        <div className="date-picker-calendar">
+          <div className="date-picker-calendar-content">
+            <div className="date-picker-calendar-header">
+              <button 
+                className="date-picker-nav-button"
+                onClick={handlePreviousMonth}
+                type="button"
+              >
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12.5 15L7.5 10L12.5 5" stroke="#344054" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+              <p className="date-picker-month-year">
+                {monthNames[calendarDate.getMonth()]} {calendarDate.getFullYear()}
+              </p>
+              <button 
+                className="date-picker-nav-button"
+                onClick={handleNextMonth}
+                type="button"
+              >
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M7.5 15L12.5 10L7.5 5" stroke="#344054" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            </div>
+
+            <div className="date-picker-calendar-grid">
+              {/* Day headers */}
+              {dayNames.map((day) => (
+                <div key={day} className="date-picker-day-header">
+                  <p>{day}</p>
+                </div>
+              ))}
+
+              {/* Calendar days */}
+              {renderCalendarDays().map((day, index) => {
+                const dayValue = typeof day === 'number' ? day : day?.day || null;
+                const isPrevMonth = typeof day === 'object' && day !== null && 'isPrevMonth' in day && day.isPrevMonth;
+                const isNextMonth = typeof day === 'object' && day !== null && 'isNextMonth' in day && day.isNextMonth;
+                const isEmpty = day === null;
+                
+                return (
+                  <div
+                    key={index}
+                    className={`date-picker-day ${isEmpty ? 'date-picker-day-empty' : ''} ${isPrevMonth || isNextMonth ? 'date-picker-day-other-month' : ''} ${dayValue === 8 ? 'date-picker-day-selected' : ''}`}
+                  >
+                    {!isEmpty && <p>{dayValue}</p>}
+                    {dayValue === 8 && <div className="date-picker-day-dot" />}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Bottom Panel - Actions */}
+          <div className="date-picker-actions">
+            <button className="date-picker-cancel-button" onClick={handleCancel} type="button">
+              <p>Cancel</p>
+            </button>
+            <button className="date-picker-apply-button" onClick={handleApply} type="button">
+              <p>Apply</p>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+interface CameraPickerMenuProps {
+  selectedCamera: string;
+  onSelectCamera: (camera: string) => void;
+  onClose: () => void;
+  cameraOptions: string[];
+}
+
+const CameraPickerMenu: React.FC<CameraPickerMenuProps> = ({ 
+  selectedCamera, 
+  onSelectCamera, 
+  onClose,
+  cameraOptions
+}) => {
+  return (
+    <div className="camera-picker-menu" onClick={(e) => e.stopPropagation()}>
+      <div className="camera-picker-content">
+        <div className="camera-picker-list">
+          {cameraOptions.map((camera) => (
+            <div
+              key={camera}
+              className={`camera-picker-item ${selectedCamera === camera ? 'camera-picker-item-selected' : ''}`}
+              onClick={() => {
+                onSelectCamera(camera);
+                onClose();
+              }}
+            >
+              <p>{camera}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClose, initialSearchValue = '', onOpenAdvancedFilters, onOpenPeopleView }) => {
   const [selectedType, setSelectedType] = useState<'all' | 'photos' | 'videos'>('photos');
   const [selectedFileType, setSelectedFileType] = useState<string>('all');
@@ -29,6 +241,16 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
   const [tags, setTags] = useState<string[]>(['beach', 'summer 2025']);
   const [selectedPeople, setSelectedPeople] = useState<Set<string>>(new Set());
   const [isFileTypesExpanded, setIsFileTypesExpanded] = useState(false);
+  const [isDateDropdownOpen, setIsDateDropdownOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<string>('Any date');
+  const [calendarDate, setCalendarDate] = useState(new Date(2024, 1, 1)); // February 2024
+  const [locationSearchValue, setLocationSearchValue] = useState<string>('');
+  const [selectedLocation, setSelectedLocation] = useState<string>('');
+  const [locationSuggestions, setLocationSuggestions] = useState<string[]>([]);
+  const [isLocationFocused, setIsLocationFocused] = useState(false);
+  const locationInputRef = useRef<HTMLInputElement>(null);
+  const [isCameraDropdownOpen, setIsCameraDropdownOpen] = useState(false);
+  const [selectedCamera, setSelectedCamera] = useState<string>('Any camera');
 
   // People photos and names - matching SearchSuggestionsDropdown
   const peoplePhotos = [
@@ -47,6 +269,44 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
     'Emma Williams',
     'Noah Brown',
     'Isabella Clark',
+  ];
+
+  // Sample location suggestions for autocomplete
+  const allLocations = [
+    'Strawberry, Arizona, USA',
+    'Phoenix, Arizona, USA',
+    'Tucson, Arizona, USA',
+    'Flagstaff, Arizona, USA',
+    'Sedona, Arizona, USA',
+    'Los Angeles, California, USA',
+    'San Francisco, California, USA',
+    'San Diego, California, USA',
+    'New York, New York, USA',
+    'Chicago, Illinois, USA',
+    'Houston, Texas, USA',
+    'Miami, Florida, USA',
+  ];
+
+  // Camera options
+  const cameraOptions = [
+    'Any camera',
+    'Canon EOS R5',
+    'Canon EOS 5D Mark IV',
+    'Canon EOS 90D',
+    'Nikon D850',
+    'Nikon Z7',
+    'Nikon D750',
+    'Sony A7R IV',
+    'Sony A7 III',
+    'Sony A6400',
+    'Fujifilm X-T4',
+    'Fujifilm X-Pro3',
+    'Olympus OM-D E-M1 Mark III',
+    'Panasonic Lumix GH5',
+    'iPhone 14 Pro',
+    'iPhone 13 Pro',
+    'Samsung Galaxy S23 Ultra',
+    'Google Pixel 7 Pro',
   ];
   
   // Search input states
@@ -73,9 +333,51 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
       setJustOpened(true);
       // Reset selected people when modal closes
       setSelectedPeople(new Set());
+      // Close date dropdown when modal closes
+      setIsDateDropdownOpen(false);
+      // Close camera dropdown when modal closes
+      setIsCameraDropdownOpen(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]); // Only depend on isOpen to preserve user input
+
+  // Close date dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (isDateDropdownOpen) {
+        const target = event.target as HTMLElement;
+        if (!target.closest('.modal-date-input-wrapper')) {
+          setIsDateDropdownOpen(false);
+        }
+      }
+    };
+
+    if (isDateDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [isDateDropdownOpen]);
+
+  // Close camera dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (isCameraDropdownOpen) {
+        const target = event.target as HTMLElement;
+        if (!target.closest('.modal-camera-input-wrapper')) {
+          setIsCameraDropdownOpen(false);
+        }
+      }
+    };
+
+    if (isCameraDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [isCameraDropdownOpen]);
 
   const handleTogglePerson = (person: string) => {
     setSelectedPeople(prev => {
@@ -138,27 +440,62 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
     }, 0);
   };
 
-  const handleClearAll = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    // Clear all filters logic can be added here
-    setSearchValue('');
-    setSelectedType('photos');
-    setSelectedFileType('all');
-    setSelectedSearchIn('all');
-    setTags([]);
-  };
-
-  const handleClearAllMouseDown = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
-
   const handleSearchKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') {
       setSearchValue('');
       searchInputRef.current?.blur();
     }
+  };
+
+  // Location search handlers
+  const handleLocationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setLocationSearchValue(value);
+    setSelectedLocation(''); // Clear selected location when typing
+    
+    // Filter locations based on search value
+    if (value.trim()) {
+      const filtered = allLocations.filter(location =>
+        location.toLowerCase().includes(value.toLowerCase())
+      );
+      setLocationSuggestions(filtered);
+    } else {
+      setLocationSuggestions([]);
+    }
+  };
+
+  const handleLocationSelect = (location: string) => {
+    setSelectedLocation(location);
+    setLocationSearchValue(location);
+    setLocationSuggestions([]);
+    setIsLocationFocused(false);
+  };
+
+  const handleLocationFocus = () => {
+    setIsLocationFocused(true);
+    if (locationSearchValue.trim()) {
+      const filtered = allLocations.filter(location =>
+        location.toLowerCase().includes(locationSearchValue.toLowerCase())
+      );
+      setLocationSuggestions(filtered);
+    }
+  };
+
+  const handleLocationBlur = () => {
+    // Delay to allow click on suggestion to register
+    setTimeout(() => {
+      setIsLocationFocused(false);
+      setLocationSuggestions([]);
+    }, 200);
+  };
+
+  const handleLocationClear = () => {
+    setLocationSearchValue('');
+    setSelectedLocation('');
+    setLocationSuggestions([]);
+    setTimeout(() => {
+      locationInputRef.current?.focus();
+    }, 0);
   };
 
   // Determine search input state
@@ -370,11 +707,29 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
             <div className="modal-section-inner" data-node-id="1587:3330">
               <p className="modal-label" data-node-id="1587:3331">Date</p>
               <div className="modal-date-input-wrapper" data-node-id="1587:3332">
-                <div className="modal-date-input" data-name="Badge" data-node-id="1587:3335">
+                <div 
+                  className="modal-date-input" 
+                  data-name="Badge" 
+                  data-node-id="1587:3335"
+                  onClick={() => setIsDateDropdownOpen(!isDateDropdownOpen)}
+                  style={{ cursor: 'pointer' }}
+                >
                   <img src={dateCalendarIcon} alt="Calendar" className="modal-date-icon" />
-                  <p className="modal-date-text">Any date</p>
+                  <p className="modal-date-text">{selectedDate}</p>
                   <img src={dropdownChevronIcon} alt="Dropdown" className="modal-date-chevron" />
                 </div>
+                {isDateDropdownOpen && (
+                  <DatePickerMenu
+                    selectedDate={selectedDate}
+                    onSelectDate={(date) => {
+                      setSelectedDate(date);
+                      setIsDateDropdownOpen(false);
+                    }}
+                    onClose={() => setIsDateDropdownOpen(false)}
+                    calendarDate={calendarDate}
+                    onCalendarDateChange={setCalendarDate}
+                  />
+                )}
               </div>
             </div>
           </div>
@@ -384,17 +739,74 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
             <p className="modal-label" data-node-id="1587:3337">Location</p>
             <div className="modal-location-input-wrapper" data-node-id="1587:3338">
               <div className="modal-location-input" data-name="Badge" data-node-id="1587:3341">
-                <p className="modal-location-text">Strawberry, Arizona, USA</p>
+                <img src={locationIcon} alt="Location" className="modal-location-icon" />
+                <input
+                  ref={locationInputRef}
+                  type="text"
+                  value={locationSearchValue}
+                  onChange={handleLocationChange}
+                  onFocus={handleLocationFocus}
+                  onBlur={handleLocationBlur}
+                  placeholder="Search for a location"
+                  className="modal-location-input-field"
+                  autoComplete="off"
+                  spellCheck="false"
+                />
+                {locationSearchValue && (
+                  <button
+                    className="modal-location-clear-button"
+                    onClick={handleLocationClear}
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                  >
+                    <img alt="Clear" className="modal-location-clear-icon" src={clearIcon} />
+                  </button>
+                )}
               </div>
+              {isLocationFocused && locationSuggestions.length > 0 && (
+                <div className="modal-location-suggestions">
+                  {locationSuggestions.map((location, index) => (
+                    <div
+                      key={index}
+                      className="modal-location-suggestion-item"
+                      onClick={() => handleLocationSelect(location)}
+                      onMouseDown={(e) => e.preventDefault()}
+                    >
+                      <p>{location}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
           {/* Camera Section */}
           <div className="modal-section" data-node-id="1587:3342">
-            <p className="modal-label" data-node-id="1587:3343">Camera</p>
-            <div className="modal-camera-input-wrapper" data-node-id="1587:3344">
-              <div className="modal-camera-input" data-name="Badge" data-node-id="1587:3347">
-                <p className="modal-camera-text">Any camera</p>
+            <div className="modal-section-inner" data-node-id="1587:3342">
+              <p className="modal-label" data-node-id="1587:3343">Camera</p>
+              <div className="modal-camera-input-wrapper" data-node-id="1587:3344">
+                <div 
+                  className="modal-camera-input" 
+                  data-name="Badge" 
+                  data-node-id="1587:3347"
+                  onClick={() => setIsCameraDropdownOpen(!isCameraDropdownOpen)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <span style={{ fontSize: '18px' }}>📷</span>
+                  <p className="modal-camera-text">{selectedCamera}</p>
+                  <img src={dropdownChevronIcon} alt="Dropdown" className="modal-camera-chevron" />
+                </div>
+                {isCameraDropdownOpen && (
+                  <CameraPickerMenu
+                    selectedCamera={selectedCamera}
+                    onSelectCamera={(camera) => {
+                      setSelectedCamera(camera);
+                      setIsCameraDropdownOpen(false);
+                    }}
+                    onClose={() => setIsCameraDropdownOpen(false)}
+                    cameraOptions={cameraOptions}
+                  />
+                )}
               </div>
             </div>
           </div>

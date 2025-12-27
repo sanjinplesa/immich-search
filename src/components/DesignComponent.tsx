@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './DesignComponent.css';
 import searchIcon from '../assets/search-icon.svg';
-import iconButtonsSvg from '../assets/icon-buttons.svg';
+import clearFieldSvg from '../assets/clear-field.svg';
 import screenshotImage from '../assets/screenshot.png';
+import arrowDownIcon from '../assets/arrow-down-icon.svg';
 import AdvancedSearchModal from './AdvancedSearchModal';
 import SearchSuggestionsDropdown from './SearchSuggestionsDropdown';
 import PeopleViewModal from './PeopleViewModal';
@@ -128,6 +129,10 @@ const Inputs: React.FC<InputsPropsWithAdvanced> = ({ className, value: externalV
         onMouseLeave={() => setIsHovered(false)}
         data-name={`Active=${state}`}
         data-node-id={state === "Default" ? "1517:1429" : state === "Active" ? "1489:121" : state === "Typing" ? "1489:562" : "1563:2990"}
+        style={{
+          paddingLeft: '12px',
+          paddingRight: '8px',
+        }}
       >
       {searchLg}
       
@@ -148,7 +153,26 @@ const Inputs: React.FC<InputsPropsWithAdvanced> = ({ className, value: externalV
               <img 
                 alt="Clear" 
                 className="search-clear-icon-svg" 
-                src={iconButtonsSvg}
+                src={clearFieldSvg}
+              />
+            </div>
+          </>
+        ) : value && !isFocused ? (
+          <>
+            <div className="search-text-typing">
+              <p className="search-text-typed">{value}</p>
+            </div>
+            <div 
+              className="search-clear-button" 
+              onClick={handleClear}
+              onMouseDown={handleClearMouseDown}
+              data-name="Icon Buttons" 
+              data-node-id="1489:566"
+            >
+              <img 
+                alt="Clear" 
+                className="search-clear-icon-svg" 
+                src={clearFieldSvg}
               />
             </div>
           </>

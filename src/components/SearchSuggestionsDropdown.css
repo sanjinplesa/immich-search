@@ -229,7 +229,7 @@
 }
 
 .search-suggestions-label {
-  font-family: var(--font-family-font-family-body, 'Inter'), sans-serif;
+  font-family: 'Inter', sans-serif;
   font-weight: 600;
   font-size: 14px;
   line-height: normal;
@@ -453,7 +453,7 @@
 
 .search-suggestions-show-more-content {
   display: flex;
-  gap: 10px;
+  gap: 6px;
   align-items: center;
   justify-content: center;
   padding: 0;
@@ -502,11 +502,11 @@
 
 .search-suggestions-show-more-chevron-vector {
   position: absolute;
-  height: 7.157px;
+  height: 18px;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 12px;
+  width: 18px;
 }
 
 .search-suggestions-show-more-chevron-img {
@@ -521,7 +521,7 @@
   font-weight: 700;
   font-size: 16px;
   line-height: normal;
-  color: var(--primary-primary-500, #4250af);
+  color: rgba(66, 80, 175, 1);
   margin: 0;
   white-space: nowrap;
 }
