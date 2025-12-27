@@ -1337,6 +1337,7 @@
   padding-top: 10px;
   padding-left: 0;
   padding-right: 0;
+  margin-bottom: 16px;
   position: relative;
   flex-shrink: 0;
   width: 100%;
@@ -1346,10 +1347,16 @@
   padding-top: 12px;
 }
 
+/* Add bottom margin to tags section */
+.modal-section:has(.modal-tags-container) {
+  padding-bottom: 16px;
+}
+
 .modal-tags-input-wrapper {
   position: relative;
   width: 100%;
   z-index: 1;
+  margin-bottom: 16px;
 }
 
 .modal-tags-input-wrapper-focused {
@@ -1365,6 +1372,7 @@
   gap: 8px;
   align-items: center;
   height: 40px;
+  min-height: 42px;
   padding-left: 12px;
   padding-right: 12px;
   padding-top: 10px;
@@ -1388,6 +1396,8 @@
   padding-right: 8px;
   padding-top: 9px;
   padding-bottom: 9px;
+  height: 40px;
+  min-height: 42px;
 }
 
 .modal-tags-input-with-tags {
@@ -1396,7 +1406,7 @@
   gap: 6px;
   padding-top: 4px;
   padding-bottom: 10px;
-  min-height: auto;
+  min-height: 42px;
   height: auto;
 }
 
@@ -1410,12 +1420,14 @@
   box-shadow: 0 0 0 3px rgba(110, 123, 206, 0.12);
   padding-top: 8px;
   padding-bottom: 12px;
+  min-height: 42px;
 }
 
 /* Single row state (focused with tags, but tags haven't wrapped) - keep 4px/10px padding */
 .modal-tags-input-with-tags.modal-tags-input-focused.modal-tags-single-row {
   padding-top: 4px;
   padding-bottom: 10px;
+  min-height: 42px;
 }
 
 /* Adding state (with dropdown) - input part */
@@ -1453,13 +1465,16 @@
   position: relative;
   flex-shrink: 0;
   width: 100%;
+  padding-left: 4px;
+  padding-right: 4px;
+  box-sizing: border-box;
 }
 
 .modal-tags-content {
   flex: 1 0 0;
   display: flex;
   align-items: center;
-  min-height: 1px;
+  min-height: 20px;
   min-width: 1px;
   position: relative;
   flex-shrink: 0;
@@ -1493,6 +1508,12 @@
   padding-right: 0;
   padding-top: 8px;
   padding-bottom: 8px;
+}
+
+/* Ensure tags list has padding in multiple rows state */
+.modal-tags-input-with-tags.modal-tags-input-focused:not(.modal-tags-input-adding):not(.modal-tags-single-row) .modal-tags-list {
+  padding-left: 0;
+  padding-right: 0;
 }
 
 .modal-tags-content-active {
@@ -1536,9 +1557,10 @@
   position: relative;
   margin-left: 0;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   height: 100%;
   padding-left: 0;
+  padding-top: 8px;
 }
 
 .modal-tags-placeholder-container {
@@ -1546,14 +1568,13 @@
   flex-direction: column;
   font-family: 'Inter', sans-serif;
   font-weight: 400;
-  justify-content: center;
+  justify-content: flex-start;
   line-height: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   position: relative;
   flex-shrink: 0;
   width: 100%;
-  height: 100%;
   align-items: flex-start;
 }
 
@@ -1577,9 +1598,9 @@
   opacity: 0;
 }
 
-/* Alternative: hide placeholder when input is focused and has value */
+/* Keep placeholder visible when focused (only hide when there's a value) */
 .modal-tags-input-focused .modal-tags-placeholder {
-  opacity: 0;
+  opacity: 1;
 }
 
 .modal-tags-typed-text {
@@ -1620,8 +1641,7 @@
   left: 0;
   top: 0;
   width: 100%;
-  height: auto;
-  min-height: 20px;
+  height: 20px;
   opacity: 1;
   cursor: text;
   border: none;
@@ -1636,59 +1656,67 @@
   font-family: 'Inter', sans-serif;
   font-weight: 500;
   line-height: 20px;
+  display: block;
 }
 
 /* Align cursor with content padding when no tags - focused state */
 /* Input is absolute within .modal-tags-input, which has padding-left: 12px */
 /* Content has padding-left: 4px, so total is 12px + 4px = 16px from input's left edge */
 /* Border changes from 1px to 2px, so we need to adjust by 1px: 16px - 1px = 15px */
+/* Container padding-top: 9px, text should align at top, so padding-top: 0 */
 .modal-tags-input-focused:not(.modal-tags-input-with-tags) .modal-tags-input-hidden {
   padding-left: 15px;
   padding-right: 8px;
   padding-top: 0;
   padding-bottom: 0;
+  top: 9px;
 }
 
 /* Align cursor with content padding when no tags - default state */
 /* Input is absolute within .modal-tags-input, which has padding-left: 12px */
 /* Content has padding-left: 4px, so total is 12px + 4px = 16px from input's left edge */
+/* Container padding-top: 10px, text should align at top, so top: 10px */
 .modal-tags-input:not(.modal-tags-input-with-tags):not(.modal-tags-input-focused) .modal-tags-input-hidden {
   padding-left: 16px;
   padding-right: 12px;
   padding-top: 0;
   padding-bottom: 0;
+  top: 10px;
 }
 
 /* Align cursor with content padding when tags present - default state */
-/* Input is absolute with top: 0, so it starts at container's padding edge */
-/* Container padding-top: 4px, content padding-top: 8px = 12px total */
+/* Container padding-top: 4px, content padding-top: 8px */
+/* Input positioned at top of content area: top: 4px + 8px = 12px */
 .modal-tags-input-with-tags .modal-tags-input-hidden {
   padding-left: 4px;
   padding-right: 4px;
-  padding-top: 12px;
-  padding-bottom: 10px;
+  padding-top: 0;
+  padding-bottom: 0;
+  top: 12px;
 }
 
 /* Align cursor with content padding when focused with tags - single row */
 /* Container padding-left: 12px, content padding-left: 4px = 16px total */
-/* Border changes from 1px to 2px, but padding is inside border, so no shift needed */
-/* Container padding-top: 4px, content padding-top: 8px = 12px total */
+/* Container padding-top: 4px, content padding-top: 8px */
+/* Input positioned at top of content area: top: 4px + 8px = 12px */
 .modal-tags-input-with-tags.modal-tags-input-focused.modal-tags-single-row .modal-tags-input-hidden {
   padding-left: 16px;
   padding-right: 4px;
-  padding-top: 12px;
-  padding-bottom: 10px;
+  padding-top: 0;
+  padding-bottom: 0;
+  top: 12px;
 }
 
 /* Align cursor with content padding when focused with tags - multiple rows */
 /* Container has default padding-left: 12px, content has padding-left: 0 */
-/* Border changes from 1px to 2px, but padding is inside border, so no shift needed */
-/* Container padding-top: 8px, content padding-top: 8px = 16px total */
+/* Container padding-top: 8px, content padding-top: 8px */
+/* Input positioned at top of content area: top: 8px + 8px = 16px */
 .modal-tags-input-with-tags.modal-tags-input-focused:not(.modal-tags-input-adding):not(.modal-tags-single-row) .modal-tags-input-hidden {
   padding-left: 12px;
   padding-right: 0;
-  padding-top: 16px;
-  padding-bottom: 12px;
+  padding-top: 0;
+  padding-bottom: 0;
+  top: 16px;
 }
 
 .modal-tag {
@@ -1770,7 +1798,7 @@
   box-shadow: 
     0px 12px 16px -4px rgba(16, 24, 40, 0.08),
     0px 4px 6px -2px rgba(16, 24, 40, 0.03);
-  overflow: visible;
+  overflow: hidden;
   margin-top: 0;
   padding: 0;
 }
@@ -1778,8 +1806,9 @@
 .modal-tag-suggestions-list {
   display: flex;
   flex-direction: column;
-  max-height: 272px;
+  max-height: 323px; /* 8 items (38px each) + half of 9th (19px) = 304 + 19 = 323px */
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 0;
 }
 
@@ -1793,6 +1822,9 @@
   transition: background-color 0.2s ease;
   position: relative;
   background: white;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .modal-tag-suggestion-divider {
@@ -1837,8 +1869,11 @@
   line-height: 24px;
   color: var(--neutral-neutral-900, #24272f);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   margin: 0;
   flex: 1;
+  min-width: 0;
 }
 
 /* Scrollbar for tag suggestions */
@@ -1847,22 +1882,22 @@
 }
 
 .modal-tag-suggestions-list::-webkit-scrollbar-track {
-  background: var(--neutral-neutral-50, #f5f6f8);
+  background: transparent;
   border-radius: 4px;
 }
 
 .modal-tag-suggestions-list::-webkit-scrollbar-thumb {
-  background: var(--neutral-neutral-200, #dcdfe6);
+  background: rgba(220, 223, 230, 0.4);
   border-radius: 4px;
 }
 
 .modal-tag-suggestions-list::-webkit-scrollbar-thumb:hover {
-  background: var(--neutral-neutral-300, #b4b7c1);
+  background: rgba(220, 223, 230, 0.6);
 }
 
 .modal-tag-suggestions-list {
   scrollbar-width: thin;
-  scrollbar-color: var(--neutral-neutral-200, #dcdfe6) var(--neutral-neutral-50, #f5f6f8);
+  scrollbar-color: rgba(220, 223, 230, 0.4) transparent;
 }
 
 /* Modal Footer */

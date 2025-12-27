@@ -262,6 +262,8 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
   const [isTagsSingleRow, setIsTagsSingleRow] = useState(true);
   const tagInputRef = useRef<HTMLInputElement>(null);
   const tagsListRef = useRef<HTMLDivElement>(null);
+  const tagsInputWrapperRef = useRef<HTMLDivElement>(null);
+  const modalBodyRef = useRef<HTMLDivElement>(null);
 
   // Tag suggestions - matching Figma design
   const allTagSuggestions = [
@@ -336,6 +338,7 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
   const [searchValue, setSearchValue] = useState(initialSearchValue);
   const [justOpened, setJustOpened] = useState(true);
   const searchInputRef = useRef<HTMLInputElement>(null);
+
 
   // Update search value only when modal first opens
   useEffect(() => {
@@ -471,7 +474,7 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
     const value = e.target.value;
     setTagInputValue(value);
     
-    // Only show suggestions when user starts typing
+    // Filter suggestions based on input, or show all if empty and focused
     if (value.trim()) {
       const filtered = allTagSuggestions.filter(suggestion =>
         suggestion.toLowerCase().includes(value.toLowerCase()) &&
@@ -479,14 +482,37 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
       );
       setTagSuggestions(filtered);
     } else {
-      // Clear suggestions when input is empty
-      setTagSuggestions([]);
+      // Show all available suggestions when input is empty and focused
+      if (isTagInputFocused) {
+        setTagSuggestions(allTagSuggestions.filter(suggestion => !tags.includes(suggestion)));
+      } else {
+        setTagSuggestions([]);
+      }
     }
   };
 
   const handleTagInputFocus = () => {
     setIsTagInputFocused(true);
-    // Don't show suggestions on focus - only show when user starts typing
+    // Show all available suggestions when field is activated
+    setTagSuggestions(allTagSuggestions.filter(suggestion => !tags.includes(suggestion)));
+    
+    // Scroll tags input to middle of modal so suggestions are visible
+    if (tagsInputWrapperRef.current && modalBodyRef.current) {
+      setTimeout(() => {
+        const wrapperRect = tagsInputWrapperRef.current?.getBoundingClientRect();
+        const bodyRect = modalBodyRef.current?.getBoundingClientRect();
+        if (wrapperRect && bodyRect && modalBodyRef.current) {
+          const wrapperTop = wrapperRect.top - bodyRect.top + modalBodyRef.current.scrollTop;
+          const bodyHeight = modalBodyRef.current.clientHeight;
+          const scrollPosition = wrapperTop - (bodyHeight / 2) + (wrapperRect.height / 2);
+          modalBodyRef.current.scrollTo({
+            top: Math.max(0, scrollPosition),
+            behavior: 'smooth'
+          });
+        }
+      }, 100);
+    }
+    
     // Let the browser handle cursor position naturally
   };
 
@@ -501,18 +527,8 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
   };
 
   const handleTagInputKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && tagInputValue.trim()) {
-      e.preventDefault();
-      const newTag = tagInputValue.trim();
-      if (!tags.includes(newTag)) {
-        setTags([...tags, newTag]);
-      }
-      setTagInputValue('');
-      setTagSuggestions([]);
-    } else if (e.key === 'Backspace' && tagInputValue === '' && tags.length > 0) {
-      // Remove last tag on backspace when input is empty
-      setTags(tags.slice(0, -1));
-    } else if (e.key === 'Escape') {
+    // Only handle Escape key - typing searches for existing tags, doesn't add new ones
+    if (e.key === 'Escape') {
       setTagInputValue('');
       setTagSuggestions([]);
       tagInputRef.current?.blur();
@@ -529,12 +545,11 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
     }
     setTagInputValue('');
     setTagSuggestions([]);
-    setTimeout(() => {
-      if (tagInputRef.current) {
-        tagInputRef.current.focus();
-        tagInputRef.current.setSelectionRange(0, 0);
-      }
-    }, 0);
+    // Revert field to default state (unfocused)
+    setIsTagInputFocused(false);
+    if (tagInputRef.current) {
+      tagInputRef.current.blur();
+    }
   };
 
   const handleTagInputWrapperClick = (e: React.MouseEvent) => {
@@ -751,7 +766,7 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
         </div>
 
         {/* Modal Body */}
-        <div className="modal-body" data-name="search-modal-1" data-node-id="1587:3294">
+        <div ref={modalBodyRef} className="modal-body" data-name="search-modal-1" data-node-id="1587:3294">
           {/* Type Section */}
           <div className="modal-section" data-name="Input field" data-node-id="1587:3308">
             <div className="modal-label-wrapper" data-name="Label wrapper" data-node-id="1587:3309">
@@ -1025,7 +1040,7 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
               <p className="modal-label" data-node-id="I1587:3362;1551:3286">Tags</p>
             </div>
             <div className={`modal-tags-container ${tags.length > 0 ? 'modal-tags-container-with-tags' : ''}`} data-node-id="I1587:3362;1551:3288">
-              <div className={`modal-tags-input-wrapper ${isTagInputFocused ? 'modal-tags-input-wrapper-focused' : ''}`}>
+              <div ref={tagsInputWrapperRef} className={`modal-tags-input-wrapper ${isTagInputFocused ? 'modal-tags-input-wrapper-focused' : ''}`}>
                 <div 
                   className={`modal-tags-input ${isTagInputFocused ? 'modal-tags-input-focused' : ''} ${tags.length > 0 ? 'modal-tags-input-with-tags' : ''} ${isTagInputFocused && tagSuggestions.length > 0 ? 'modal-tags-input-adding' : ''} ${tags.length > 0 && isTagInputFocused && isTagsSingleRow ? 'modal-tags-single-row' : ''}`}
                   data-name="Input" 
@@ -1035,19 +1050,21 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
                   {!tagInputValue && (
                     <div className="modal-tags-content" data-name="Content" data-node-id="I1587:3362;1551:3298">
                       <div className="modal-tags-placeholder-container">
-                        <p className="modal-tags-placeholder">Type to add tags</p>
+                        <p className="modal-tags-placeholder">Type to search tags</p>
                       </div>
                     </div>
                   )}
-                  {tags.length > 0 && (
+                  {tags.length > 0 && !isTagInputFocused && (
                     <div ref={tagsListRef} className="modal-tags-list" data-node-id="I1587:3362;1551:3343">
-                      {tags.map((tag) => (
-                        <div key={tag} className="search-person-chip" data-name="Tag" data-node-id="I1587:3362;1551:3344">
-                          <div className="search-person-chip-content" data-name="Content" data-node-id="I1587:3362;1551:3344;3309:406970">
-                            <p className="search-person-chip-text" data-node-id="I1587:3362;1551:3344;3307:418119">
-                              {tag}
-                            </p>
-                          </div>
+                      {tags.map((tag) => {
+                        const truncatedTag = tag.length > 20 ? tag.substring(0, 20) + '...' : tag;
+                        return (
+                          <div key={tag} className="search-person-chip" data-name="Tag" data-node-id="I1587:3362;1551:3344">
+                            <div className="search-person-chip-content" data-name="Content" data-node-id="I1587:3362;1551:3344;3309:406970">
+                              <p className="search-person-chip-text" data-node-id="I1587:3362;1551:3344;3307:418119">
+                                {truncatedTag}
+                              </p>
+                            </div>
                           <div 
                             className="search-person-chip-close" 
                             onClick={(e) => {
@@ -1070,7 +1087,8 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
                             </div>
                           </div>
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                   <input
