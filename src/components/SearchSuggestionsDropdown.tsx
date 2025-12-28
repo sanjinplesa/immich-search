@@ -31,6 +31,7 @@ const SearchSuggestionsDropdown: React.FC<SearchSuggestionsDropdownProps> = ({ i
     'https://i.pravatar.cc/150?img=68', // Emma Williams
     'https://i.pravatar.cc/150?img=15', // Noah Brown
     'https://i.pravatar.cc/150?img=32', // Isabella Clark
+    'https://i.pravatar.cc/150?img=50', // Alexander Davis
   ];
 
   const people = [
@@ -40,11 +41,18 @@ const SearchSuggestionsDropdown: React.FC<SearchSuggestionsDropdownProps> = ({ i
     'Emma Williams',
     'Noah Brown',
     'Isabella Clark',
+    'Alexander Davis',
   ];
 
   const handleRemoveRecent = (id: number, e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
     setRecentSearches(recentSearches.filter(item => item.id !== id));
+  };
+
+  const handleRemoveRecentMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
   };
 
   const handleClearAll = (e: React.MouseEvent) => {
@@ -115,6 +123,7 @@ const SearchSuggestionsDropdown: React.FC<SearchSuggestionsDropdownProps> = ({ i
                     <div
                       className="search-suggestion-close"
                       onClick={(e) => handleRemoveRecent(search.id, e)}
+                      onMouseDown={handleRemoveRecentMouseDown}
                       data-name="_Tag close X"
                       data-node-id="I1563:5129;1563:8388"
                     >
@@ -148,7 +157,7 @@ const SearchSuggestionsDropdown: React.FC<SearchSuggestionsDropdownProps> = ({ i
             <p className="search-suggestions-label" data-node-id="I1563:5129;1554:3474">People</p>
           </div>
           <div className="search-suggestions-people-grid" data-node-id="I1563:5129;1554:3476">
-            {people.slice(0, 5).map((person, index) => {
+            {people.slice(0, 6).map((person, index) => {
               const isSelected = selectedPeople.includes(person);
               return (
                 <div

@@ -1,12 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './DesignComponent.css';
+import './AdvancedSearchModal.css';
+import './ClearButton.css';
 import searchIcon from '../assets/search-icon.svg';
-import clearFieldSvg from '../assets/clear-field.svg';
 import screenshotImage from '../assets/screenshot.png';
 import closeXIcon from '../assets/close-x-icon.svg';
 import AdvancedSearchModal from './AdvancedSearchModal';
 import SearchSuggestionsDropdown from './SearchSuggestionsDropdown';
 import PeopleViewModal from './PeopleViewModal';
+import ClearButton from './ClearButton';
 
 type InputsProps = {
   className?: string;
@@ -27,7 +29,10 @@ const Inputs: React.FC<InputsPropsWithAdvanced> = ({ className, value: externalV
   const [isFocused, setIsFocused] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [internalValue, setInternalValue] = useState('');
+  const [justOpened, setJustOpened] = useState(true);
+  const [shouldShowDropdownOnFocus, setShouldShowDropdownOnFocus] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Use external value if provided, otherwise use internal state
   const value = externalValue !== undefined ? externalValue : internalValue;
@@ -42,10 +47,13 @@ const Inputs: React.FC<InputsPropsWithAdvanced> = ({ className, value: externalV
   };
 
   const handleBlur = () => {
-    // Use setTimeout to check if focus moved to clear button
     setTimeout(() => {
       if (document.activeElement !== inputRef.current) {
         setIsFocused(false);
+        // If there's text when blurring, set flag to show dropdown on next focus
+        if (value && value.trim()) {
+          setShouldShowDropdownOnFocus(true);
+        }
       }
     }, 150);
   };
@@ -55,6 +63,16 @@ const Inputs: React.FC<InputsPropsWithAdvanced> = ({ className, value: externalV
     if (typeof setValue === 'function') {
       setValue(newValue);
     }
+    // Clear the flag when user starts typing (modifying the text)
+    setShouldShowDropdownOnFocus(false);
+  };
+
+  const handleSearchWrapperClick = (e: React.MouseEvent) => {
+    // Don't focus if clicking on clear button or chip close button
+    if (!(e.target as HTMLElement).closest('.search-clear-button') && 
+        !(e.target as HTMLElement).closest('.search-person-chip-close')) {
+      inputRef.current?.focus();
+    }
   };
 
   const handleClearMouseDown = (e: React.MouseEvent) => {
@@ -62,12 +80,12 @@ const Inputs: React.FC<InputsPropsWithAdvanced> = ({ className, value: externalV
     e.stopPropagation();
   };
 
-  const handleClear = (e: React.MouseEvent) => {
+  const handleSearchClear = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (typeof setValue === 'function') {
       setValue('');
     }
-    // Keep focus after clearing
+    setShouldShowDropdownOnFocus(false);
     setTimeout(() => {
       inputRef.current?.focus();
     }, 0);
@@ -87,15 +105,25 @@ const Inputs: React.FC<InputsPropsWithAdvanced> = ({ className, value: externalV
     }
   };
 
-  // Determine state
-  let state: "Default" | "Active4" | "Active" | "Typing" = "Default";
+  // Determine search input state - matching AdvancedSearchModal logic
+  let searchState: "Default" | "Active4" | "Active" | "Typing" = "Default";
   if (isFocused && value) {
-    state = "Typing";
+    // If focused with text and should show dropdown, show Active state to display dropdown
+    // Otherwise show Typing state
+    searchState = shouldShowDropdownOnFocus ? "Active" : "Typing";
   } else if (isFocused) {
-    state = "Active";
-  } else if (isHovered && !isFocused) {
-    state = "Active4";
+    searchState = "Active";
+  } else if (value) {
+    // If there's text but not focused, show typing state to keep the text visible
+    searchState = "Typing";
+  } else if (justOpened) {
+    // Show default state when just opened and there's no value
+    searchState = "Default";
+  } else if (isHovered) {
+    searchState = "Active4";
   }
+
+  const shouldShowTextDiv = value && !isFocused;
 
   const searchLg = (
     <div className="search-icon-container" data-name="search-lg" data-node-id="1523:1980">
@@ -113,18 +141,30 @@ const Inputs: React.FC<InputsPropsWithAdvanced> = ({ className, value: externalV
     if (typeof setValue === 'function') {
       setValue(suggestion);
     }
+    setShouldShowDropdownOnFocus(false);
     inputRef.current?.focus();
   };
 
+  // Clear the flag after showing dropdown once when focused
+  useEffect(() => {
+    if (isFocused && shouldShowDropdownOnFocus && value) {
+      // Clear the flag after a short delay to ensure dropdown is shown
+      const timer = setTimeout(() => {
+        setShouldShowDropdownOnFocus(false);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isFocused, shouldShowDropdownOnFocus, value]);
+
   return (
-    <div className={`search-input-container ${className || ''}`}>
+    <div ref={containerRef} className={`search-input-container ${className || ''}`}>
       <div
-        className={`search-input-wrapper search-state-${state.toLowerCase()}`}
-        onClick={handleWrapperClick}
+        className={`search-input-wrapper search-state-${searchState.toLowerCase()} ${isFocused ? 'search-input-focused' : ''}`}
+        onClick={handleSearchWrapperClick}
         onMouseEnter={() => !isFocused && setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        data-name={`Active=${state}`}
-        data-node-id={state === "Default" ? "1517:1429" : state === "Active" ? "1489:121" : state === "Typing" ? "1489:562" : "1563:2990"}
+        data-name={`Active=${searchState}`}
+        data-node-id={searchState === "Default" ? "1517:1429" : searchState === "Active" ? "1489:121" : searchState === "Typing" ? "1489:562" : "1563:2990"}
         style={{
           paddingLeft: '12px',
           paddingRight: '8px',
@@ -208,69 +248,85 @@ const Inputs: React.FC<InputsPropsWithAdvanced> = ({ className, value: externalV
       )}
       
       <div className="search-input-content">
-        {state === "Typing" || (value && !isFocused) ? (
-          <>
-            <div className="search-text-typing">
-              <p className="search-text-typed">{value}</p>
+        {!isFocused && !value && (
+          <div className="search-text" data-node-id={searchState === "Active" ? "1489:612" : "1517:1420"}>
+            <p className="search-text-content">{placeholderText}</p>
+          </div>
+        )}
+        {!isFocused && !value && searchState !== "Active" && (
+          <div className="search-shortcut" data-node-id="1563:3014">
+            <div className="shortcut-button" data-name="Buttons/Button" data-node-id="1563:3047">
+              <div className="shortcut-text-padding" data-name="Text padding" data-node-id="I1563:3047;1487:372">
+                <p className="shortcut-text" data-node-id="I1563:3047;1487:373">
+                  ⌘+K
+                </p>
+              </div>
             </div>
-            <div 
-              className="search-clear-button" 
-              onClick={handleClear}
-              onMouseDown={handleClearMouseDown}
-              data-name="Icon Buttons" 
-              data-node-id="1489:566"
-            >
-              <img 
-                alt="Clear" 
-                className="search-clear-icon-svg" 
-                src={clearFieldSvg}
-              />
-            </div>
-          </>
-        ) : (
-          <>
-            {!isFocused && (
-              <>
-                <div className="search-text" data-node-id={state === "Active" ? "1489:612" : "1517:1420"}>
-                  <p className="search-text-content">{placeholderText}</p>
-                </div>
-                {state !== "Active" && (
-                  <div className="search-shortcut" data-node-id="1563:3014">
-                    <div className="shortcut-button" data-name="Buttons/Button" data-node-id="1563:3047">
-                      <div className="shortcut-text-padding" data-name="Text padding" data-node-id="I1563:3047;1487:372">
-                        <p className="shortcut-text" data-node-id="I1563:3047;1487:373">
-                          ⌘+K
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-          </>
+          </div>
         )}
       </div>
+      
+      {/* Text div positioned relative to input container, not content div */}
+      {shouldShowTextDiv && (
+        <div 
+          className="search-text-typing"
+          onClick={(e) => {
+            e.stopPropagation();
+            // When clicking the typed text, focus the input
+            setTimeout(() => {
+              if (inputRef.current) {
+                inputRef.current.focus();
+                setIsFocused(true);
+              }
+            }, 0);
+          }}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+          style={{ cursor: 'text' }}
+        >
+          <p className="search-text-typed">{value}</p>
+        </div>
+      )}
+      
+      {/* Clear button - positioned on the right */}
+      {value && (
+        <ClearButton
+          onClick={handleSearchClear}
+          className="search-clear-button"
+          aria-label="Clear search"
+        />
+      )}
 
       <input
         ref={inputRef}
         type="text"
-        value={value}
+        value={value || ''}
         onChange={handleChange}
-        onFocus={() => {
+        onFocus={(e) => {
           setIsFocused(true);
           setIsHovered(false);
+          setJustOpened(false);
+          setTimeout(() => {
+            if (inputRef.current) {
+              const length = value.length;
+              inputRef.current.setSelectionRange(length, length);
+              inputRef.current.focus();
+            }
+          }, 10);
         }}
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
         onClick={(e) => e.stopPropagation()}
-        className="search-input-hidden"
+        className={`search-input-hidden ${value && !isFocused ? 'search-input-hidden-when-typing' : ''}`}
         aria-label="Search photos"
         autoComplete="off"
         spellCheck="false"
       />
       </div>
       <SearchSuggestionsDropdown 
-        isVisible={state === "Active"} 
+        isVisible={isFocused} 
         searchValue={value}
         onSelectSuggestion={handleSelectSuggestion}
         onOpenAdvancedFilters={onOpenAdvancedFilters}
