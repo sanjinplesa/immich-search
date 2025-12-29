@@ -38,14 +38,6 @@ const Inputs: React.FC<InputsPropsWithAdvanced> = ({ className, value: externalV
   const value = externalValue !== undefined ? externalValue : internalValue;
   const setValue = externalOnChange || setInternalValue;
 
-  const handleWrapperClick = (e: React.MouseEvent) => {
-    // Don't focus if clicking on clear button or chip close button
-    if (!(e.target as HTMLElement).closest('.search-clear-button') && 
-        !(e.target as HTMLElement).closest('.search-person-chip-close')) {
-      inputRef.current?.focus();
-    }
-  };
-
   const handleBlur = () => {
     setTimeout(() => {
       if (document.activeElement !== inputRef.current) {
@@ -73,11 +65,6 @@ const Inputs: React.FC<InputsPropsWithAdvanced> = ({ className, value: externalV
         !(e.target as HTMLElement).closest('.search-person-chip-close')) {
       inputRef.current?.focus();
     }
-  };
-
-  const handleClearMouseDown = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
   };
 
   const handleSearchClear = (e: React.MouseEvent) => {

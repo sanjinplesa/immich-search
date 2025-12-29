@@ -5,7 +5,6 @@ import './DesignComponent.css';
 import './ClearButton.css';
 import searchIcon from '../assets/search-icon.svg';
 import closeXIcon from '../assets/close-x-icon.svg';
-import iconButtonsSvg from '../assets/icon-buttons.svg';
 import arrowDownIcon from '../assets/arrow-down-icon.svg';
 import arrowRightIcon from '../assets/16f676d5be3442ecdd9228f68fac1693697db02a.svg';
 import photosIconDefault from '../assets/photos-icon-default.svg';
@@ -256,7 +255,6 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
   const [selectedDate, setSelectedDate] = useState<string>('Any date');
   const [calendarDate, setCalendarDate] = useState(new Date(2024, 1, 1)); // February 2024
   const [locationSearchValue, setLocationSearchValue] = useState<string>('');
-  const [selectedLocation, setSelectedLocation] = useState<string>('');
   const [locationSuggestions, setLocationSuggestions] = useState<string[]>([]);
   const [isLocationFocused, setIsLocationFocused] = useState(false);
   const locationInputRef = useRef<HTMLInputElement>(null);
@@ -663,7 +661,6 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
   const handleLocationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setLocationSearchValue(value);
-    setSelectedLocation(''); // Clear selected location when typing
     
     // Filter locations based on search value
     if (value.trim()) {
@@ -677,7 +674,6 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
   };
 
   const handleLocationSelect = (location: string) => {
-    setSelectedLocation(location);
     setLocationSearchValue(location);
     setLocationSuggestions([]);
     setIsLocationFocused(false);
@@ -703,7 +699,6 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
 
   const handleLocationClear = () => {
     setLocationSearchValue('');
-    setSelectedLocation('');
     setLocationSuggestions([]);
     setTimeout(() => {
       locationInputRef.current?.focus();
@@ -718,7 +713,6 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
     setSelectedPeople(new Set());
     setSelectedDate('Any date');
     setLocationSearchValue('');
-    setSelectedLocation('');
     setSelectedCamera('Any camera');
     setSearchValue('');
     setIsFileTypesExpanded(false);
