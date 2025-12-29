@@ -216,24 +216,79 @@
   box-shadow: 0 0 0 3px rgba(110, 123, 206, 0.12);
 }
 
+/* Typing state when not focused - remove focus styling but keep text visible */
+.modal-search-state-typing:not(.modal-search-input-focused) {
+  border: 1px solid var(--neutral-neutral-200, #dcdfe6);
+  background: var(--neutral-neutral-50, #f5f6f8);
+  box-shadow: none;
+}
+
 /* Hidden input for accessibility */
+/* Position input field to the right of search icon in all states */
+/* Container padding-left: 12px, icon width: 20px, gap: 8px = 40px total from container's left edge */
 .modal-search-input-hidden {
   position: absolute;
-  left: 0;
+  left: 40px;
   top: 0;
-  width: 100%;
+  width: calc(100% - 40px);
   height: 100%;
   opacity: 1;
   cursor: text;
   border: none;
   padding: 0;
+  padding-right: 8px;
   margin: 0;
   background: transparent;
   outline: none;
   font-size: 16px;
   color: var(--neutral-neutral-900, #24272f);
   caret-color: var(--primary-primary-500, #4250af);
-  z-index: 1;
+  z-index: 2;
+}
+
+/* Hide input text when placeholder is visible (default state) */
+.modal-search-input.modal-search-state-default .modal-search-input-hidden,
+.modal-search-input.modal-search-state-active4 .modal-search-input-hidden {
+  color: transparent !important;
+  caret-color: transparent !important;
+  /* Use text-shadow and webkit-text-fill-color to completely hide any text rendering */
+  text-shadow: 0 0 0 transparent !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+/* Hide input completely when typed text div is showing - but keep it functional */
+.modal-search-input-hidden-when-typing {
+  /* Make the entire input invisible but keep it clickable */
+  opacity: 0 !important;
+  /* Keep pointer events so it's still clickable */
+  pointer-events: auto !important;
+  /* Position it behind the typed text div */
+  z-index: -1 !important;
+  /* Hide all text rendering */
+  color: transparent !important;
+  caret-color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+  /* Ensure it's behind the overlay */
+  position: absolute;
+}
+
+/* Show input text when focused in typing state */
+.modal-search-input.modal-search-state-typing.modal-search-input-focused .modal-search-input-hidden {
+  color: var(--neutral-neutral-900, #24272f) !important;
+  caret-color: var(--primary-primary-500, #4250af) !important;
+  -webkit-text-fill-color: var(--neutral-neutral-900, #24272f) !important;
+  text-shadow: none !important;
+  z-index: 1 !important;
+}
+
+/* Show input text only when focused and empty (active state) */
+.modal-search-input.modal-search-state-active .modal-search-input-hidden {
+  color: var(--neutral-neutral-900, #24272f) !important;
+  caret-color: var(--primary-primary-500, #4250af) !important;
+  -webkit-text-fill-color: var(--neutral-neutral-900, #24272f) !important;
+  text-shadow: none !important;
+  text-indent: 0;
+  font-size: 16px !important;
 }
 
 .modal-search-icon-container {
@@ -241,17 +296,56 @@
   width: 20px;
   height: 20px;
   flex-shrink: 0;
-  overflow: hidden;
+  overflow: visible;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+  /* Force no circular appearance */
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+}
+
+.modal-search-icon-container::before,
+.modal-search-icon-container::after {
+  display: none !important;
+  content: none !important;
+  background: none !important;
+  border: none !important;
 }
 
 .modal-search-icon-wrapper {
   position: absolute;
   inset: 12.5%;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.modal-search-icon-wrapper::before,
+.modal-search-icon-wrapper::after {
+  display: none !important;
+  content: none !important;
 }
 
 .modal-search-icon-inner {
   position: absolute;
   inset: -5.56%;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.modal-search-icon-inner::before,
+.modal-search-icon-inner::after {
+  display: none !important;
+  content: none !important;
 }
 
 .modal-search-icon {
@@ -259,6 +353,49 @@
   max-width: none;
   width: 100%;
   height: 100%;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  border-radius: 0 !important;
+  filter: none !important;
+}
+
+/* Try to hide the circular arc in the SVG path using stroke-dasharray trick */
+.modal-search-icon svg path {
+  /* This won't work well since the circle and handle are in the same path */
+  /* Let's try a different approach - maybe the circle is from something else */
+}
+
+/* Hide any circle backgrounds/borders on all icon elements */
+.modal-search-icon-container * {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* Remove any default browser focus rings or outlines */
+.modal-search-icon-container:focus,
+.modal-search-icon-container:focus-visible,
+.modal-search-icon-container:focus-within {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+.modal-search-icon-wrapper:focus,
+.modal-search-icon-wrapper:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+.modal-search-icon-inner:focus,
+.modal-search-icon-inner:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
 }
 
 .modal-search-content {
@@ -266,10 +403,23 @@
   display: flex;
   gap: 6px;
   align-items: center;
+  height: 16px;
   min-height: 1px;
   min-width: 1px;
   position: relative;
   flex-shrink: 0;
+  z-index: 1;
+  /* Ensure it doesn't cover the text div */
+  pointer-events: none;
+}
+
+.modal-search-content > * {
+  pointer-events: auto;
+}
+
+/* Ensure text div is always on top when it exists */
+.modal-search-input .modal-search-text-typing {
+  z-index: 999 !important;
 }
 
 .modal-search-text-wrapper {
@@ -280,6 +430,7 @@
   min-width: 1px;
   position: relative;
   flex-shrink: 0;
+  z-index: 2;
 }
 
 .modal-search-text-content {
@@ -340,6 +491,7 @@
   position: relative;
   flex-shrink: 0;
   color: var(--neutral-neutral-300, #b4b7c1);
+  z-index: 2;
 }
 
 .modal-search-placeholder p {
@@ -352,18 +504,60 @@
 }
 
 .modal-search-text-typing {
-  flex: 1 0 0;
-  display: flex;
-  align-items: center;
+  position: absolute !important;
+  left: 40px !important;
+  top: 0 !important;
+  right: 40px !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
   gap: 0;
-  min-height: 1px;
-  min-width: 1px;
-  position: relative;
+  z-index: 100 !important;
+  /* Ensure this covers the input field completely with solid background */
+  background: var(--neutral-neutral-100, #eceef2) !important;
+  /* Allow clicks to pass through to input below, but not to clear button */
+  pointer-events: auto;
+  /* Match input positioning exactly - account for clear button (24px button + 8px margin = 32px, use 40px for safety) */
+  padding-right: 8px !important;
+  padding-left: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  /* Allow text overflow to be visible with ellipsis */
+  overflow: hidden;
+  /* Ensure text container can expand */
+  min-width: 0 !important;
+  width: auto !important;
+  /* Ensure visibility */
+  visibility: visible !important;
+  opacity: 1 !important;
+  /* Force rendering */
+  transform: translateZ(0) !important;
+  will-change: auto !important;
+}
+
+/* Match text div background to input background when not focused */
+.modal-search-input.modal-search-state-typing:not(.modal-search-input-focused) .modal-search-text-typing {
+  background: var(--neutral-neutral-50, #f5f6f8) !important;
+}
+
+/* Force text div to be visible when it exists */
+.modal-search-input .modal-search-text-typing {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  z-index: 100 !important;
 }
 
 .modal-search-text-typing .modal-search-typed-text {
-  flex: 0 1 auto;
+  flex: 1 1 auto;
   min-width: 0;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 .modal-search-typed-text {
@@ -371,46 +565,20 @@
   font-weight: 500;
   font-size: 16px;
   line-height: normal;
-  color: var(--content-content-text-primary, #24272f);
+  color: var(--content-content-text-primary, #24272f) !important;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  flex-shrink: 0;
+  flex-shrink: 1;
   margin: 0;
+  /* Ensure text is not cropped */
+  max-width: 100%;
+  visibility: visible !important;
+  opacity: 1 !important;
+  display: block !important;
 }
 
-.modal-search-clear-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-  z-index: 2;
-  position: relative;
-  width: 24px;
-  height: 24px;
-  background: var(--neutral-neutral-800, #2a2d38);
-  border: none;
-  padding: 2.462px;
-  border-radius: 614.769px;
-}
-
-.modal-search-clear-button:hover {
-  background: var(--neutral-neutral-700, #3a3d48);
-}
-
-.modal-search-clear-button:active {
-  background: var(--neutral-neutral-600, #4a4d58);
-}
-
-.modal-search-clear-icon-svg {
-  display: block;
-  width: 19.076px;
-  height: 19.076px;
-  flex-shrink: 0;
-  filter: brightness(0) invert(1);
-}
+/* Clear button styles moved to ClearButton.css */
 
 /* Modal Body */
 .modal-body {
@@ -422,7 +590,7 @@
   align-items: center;
   overflow-x: hidden;
   overflow-y: auto;
-  padding: 16px;
+  padding: 20px 16px 20px 16px;
   position: relative;
   z-index: 0;
   box-shadow: 
@@ -442,7 +610,7 @@
   flex-direction: column;
   align-items: flex-start;
   padding-bottom: 0;
-  padding-top: 16px;
+  padding-top: 0px;
   padding-left: 0;
   padding-right: 0;
   position: relative;
@@ -450,10 +618,16 @@
   width: 100%;
 }
 
+/* Add 20px padding-top to all modal sections except the first one (Type section) */
+.modal-section:not(:first-of-type) {
+  padding-top: 20px;
+}
+
 .modal-section-inner {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  padding-top: 0;
   position: relative;
   flex-shrink: 0;
   width: 100%;
@@ -478,6 +652,11 @@
   margin: 0;
 }
 
+/* Common spacing class for all input fields after labels */
+.modal-input-field-spacing {
+  padding-top: 6px;
+}
+
 /* Badges */
 .modal-badges {
   display: flex;
@@ -485,7 +664,6 @@
   align-items: center;
   cursor: pointer;
   padding-bottom: 0;
-  padding-top: 8px;
   padding-left: 0;
   padding-right: 0;
   position: relative;
@@ -525,12 +703,10 @@
 }
 
 .modal-badge-text {
-  display: flex;
-  flex-direction: column;
+  display: block;
   font-family: 'Inter', sans-serif;
   font-weight: 500;
-  justify-content: center;
-  line-height: 0;
+  line-height: 15px !important;
   position: relative;
   flex-shrink: 0;
   font-size: 14px;
@@ -541,12 +717,10 @@
 }
 
 .modal-badge-text-selected {
-  display: flex;
-  flex-direction: column;
+  display: block;
   font-family: 'Inter', sans-serif;
   font-weight: 500;
-  justify-content: center;
-  line-height: 0;
+  line-height: 15px !important;
   position: relative;
   flex-shrink: 0;
   font-size: 14px;
@@ -554,6 +728,7 @@
   text-align: center;
   white-space: nowrap;
   margin: 0;
+  box-sizing: content-box;
 }
 
 .modal-badge-icon {
@@ -561,6 +736,19 @@
   height: 16px;
   flex-shrink: 0;
   display: block;
+  object-fit: contain;
+  /* Default color for unselected state - black icons */
+  filter: brightness(0) saturate(100%);
+}
+
+.modal-badge-selected .modal-badge-icon {
+  /* Selected state - primary color */
+  filter: brightness(0) saturate(100%) invert(27%) sepia(67%) saturate(2000%) hue-rotate(220deg) brightness(0.8) contrast(1.2);
+}
+
+/* Video icon already has correct colors in SVG, so remove filter */
+.modal-badge-icon-video {
+  filter: none !important;
 }
 
 /* People Section */
@@ -732,7 +920,6 @@
   gap: 8px;
   align-items: center;
   padding-bottom: 0;
-  padding-top: 8px;
   padding-left: 0;
   padding-right: 0;
   position: relative;
@@ -744,7 +931,7 @@
 .modal-location-input,
 .modal-camera-input {
   flex: 1 0 0;
-  background: var(--neutral-neutral-25, #fafafb);
+  background: var(--neutral-neutral-50, #f5f6f8);
   border: 1px solid var(--neutral-neutral-200, #dcdfe6);
   border-style: solid;
   display: flex;
@@ -761,6 +948,16 @@
   border-radius: 8px;
   flex-shrink: 0;
   transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+/* Hover state for date, location, camera inputs */
+.modal-date-input:hover:not(.modal-date-input-focused),
+.modal-location-input:hover:not(.modal-location-input-focused),
+.modal-camera-input:hover:not(.modal-camera-input-focused) {
+  background: var(--neutral-neutral-50, #f5f6f8);
+  border: 1px solid var(--neutral-neutral-300, #b4b7c1);
+  border-style: solid;
 }
 
 .modal-date-input-focused,
@@ -770,6 +967,13 @@
   border: 2px solid var(--primary-primary-400, #7380ca);
   background: var(--neutral-neutral-100, #eceef2);
   box-shadow: 0 0 0 3px rgba(110, 123, 206, 0.12);
+}
+
+/* Typing state for location input (has text) */
+.modal-location-input-typing:not(.modal-location-input-focused) {
+  background: var(--neutral-neutral-50, #f5f6f8);
+  border: 1px solid var(--neutral-neutral-200, #dcdfe6);
+  border-style: solid;
 }
 
 .modal-date-text,
@@ -789,6 +993,12 @@
   font-size: 15px;
   color: var(--neutral-neutral-900, #24272f);
   margin: 0;
+}
+
+.modal-date-text,
+.modal-camera-text {
+  height: 16px;
+  font-weight: 600;
 }
 
 .modal-date-text p,
@@ -845,37 +1055,7 @@
   color: var(--neutral-neutral-400, #8f929f);
 }
 
-.modal-location-clear-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--neutral-neutral-800, #2a2d38);
-  border: none;
-  border-radius: 614.769px;
-  cursor: pointer;
-  flex-shrink: 0;
-  height: 16px;
-  width: 16px;
-  padding: 2.462px;
-  transition: background-color 0.2s ease;
-  z-index: 2;
-  position: relative;
-}
-
-.modal-location-clear-button:hover {
-  background: var(--neutral-neutral-700, #3a3d48);
-}
-
-.modal-location-clear-button:active {
-  background: var(--neutral-neutral-600, #4a4d58);
-}
-
-.modal-location-clear-icon {
-  display: block;
-  width: 16px;
-  height: 16px;
-  flex-shrink: 0;
-}
+/* Clear button styles moved to ClearButton.css */
 
 .modal-location-input-wrapper {
   position: relative;
@@ -1199,7 +1379,6 @@
   align-items: flex-start;
   overflow: visible;
   padding-bottom: 0;
-  padding-top: 10px;
   padding-left: 0;
   padding-right: 0;
   position: relative;
@@ -1222,7 +1401,7 @@
 
 .modal-file-types-badges {
   display: flex;
-  gap: 4px;
+  gap: 8px;
   align-items: center;
   position: relative;
   flex-shrink: 0;
@@ -1261,7 +1440,7 @@
   font-family: 'Inter', sans-serif;
   font-weight: 500;
   justify-content: center;
-  line-height: 0;
+  line-height: normal;
   position: relative;
   flex-shrink: 0;
   font-size: 14px;
@@ -1274,6 +1453,7 @@
 .modal-file-type-text-selected {
   font-family: 'Inter', sans-serif;
   font-weight: 500;
+  font-size: 14px;
   color: var(--primary-primary-600, #354091);
 }
 
@@ -1300,6 +1480,7 @@
   font-weight: 600;
   justify-content: center;
   line-height: 0;
+  height: 16px;
   position: relative;
   flex-shrink: 0;
   font-size: 14px;
@@ -1334,22 +1515,19 @@
   flex-direction: column;
   align-items: center;
   padding-bottom: 0;
-  padding-top: 10px;
   padding-left: 0;
   padding-right: 0;
-  margin-bottom: 16px;
+  margin-bottom: 0px;
+  height: fit-content;
   position: relative;
   flex-shrink: 0;
   width: 100%;
 }
 
-.modal-tags-container-with-tags {
-  padding-top: 12px;
-}
-
 /* Add bottom margin to tags section */
 .modal-section:has(.modal-tags-container) {
-  padding-bottom: 16px;
+  padding-bottom: 0px;
+  padding-top: 20px;
 }
 
 .modal-tags-input-wrapper {
@@ -1364,7 +1542,7 @@
 }
 
 .modal-tags-input {
-  background: var(--neutral-neutral-25, #fafafb);
+  background: var(--neutral-neutral-50, #f5f6f8);
   border: 1px solid var(--neutral-neutral-200, #dcdfe6);
   border-style: solid;
   display: flex;
@@ -1379,11 +1557,24 @@
   padding-bottom: 10px;
   position: relative;
   border-radius: 8px;
-  box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
   flex-shrink: 0;
   width: 100%;
   cursor: text;
   transition: all 0.2s ease;
+}
+
+/* Hover state for tags input */
+.modal-tags-input:hover:not(.modal-tags-input-focused):not(.modal-tags-input-with-tags) {
+  background: var(--neutral-neutral-50, #f5f6f8);
+  border: 1px solid var(--neutral-neutral-300, #b4b7c1);
+  border-style: solid;
+}
+
+/* Hover state for tags input with tags */
+.modal-tags-input-with-tags:hover:not(.modal-tags-input-focused) {
+  background: var(--neutral-neutral-50, #f5f6f8);
+  border: 1px solid var(--neutral-neutral-300, #b4b7c1);
+  border-style: solid;
 }
 
 /* Active state (focused, no tags) */
@@ -1404,8 +1595,8 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 6px;
-  padding-top: 4px;
-  padding-bottom: 10px;
+  padding-top: 8px;
+  padding-bottom: 12px;
   min-height: 42px;
   height: auto;
 }
@@ -1432,14 +1623,14 @@
 
 /* Adding state (with dropdown) - input part */
 .modal-tags-input-focused.modal-tags-input-adding {
-  border: 1px solid var(--neutral-neutral-200, #dcdfe6);
+  border: 2px solid var(--primary-primary-400, #7380ca);
   border-bottom: none;
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
   border-top-left-radius: 8px;
   border-top-right-radius: 8px;
   background: var(--neutral-neutral-100, #eceef2);
-  box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
+  box-shadow: 0 0 0 3px rgba(110, 123, 206, 0.12);
   padding-left: 12px;
   padding-right: 12px;
   padding-top: 10px;
@@ -1719,6 +1910,9 @@
   top: 16px;
 }
 
+/* Tag input clear button */
+/* Clear button styles moved to ClearButton.css */
+
 .modal-tag {
   background: var(--primary-primary-500, #4250af);
   display: flex;
@@ -1737,7 +1931,7 @@
 .modal-tag-text {
   font-family: 'Inter', sans-serif;
   font-weight: 500;
-  line-height: 20px;
+  line-height: 15px !important;
   position: relative;
   flex-shrink: 0;
   font-size: 14px;
@@ -2053,17 +2247,18 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  padding: 0 24px;
+  padding: 0;
   position: relative;
   flex-shrink: 0;
   cursor: pointer;
   background: transparent;
   border: none;
   transition: all 0.2s ease;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 .modal-clear-all-button:hover {
-  background: var(--neutral-neutral-50, #f5f6f8);
+  background: transparent;
 }
 
 .modal-clear-all-text {
