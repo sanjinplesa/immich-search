@@ -51,7 +51,7 @@
   margin-top: 0;
   align-items: center;
   position: relative;
-  border-radius: 12px;
+  border-radius: 16px;
   overflow: visible;
   box-shadow: 
     0px 237px 80px 0px rgba(0, 0, 0, 0.03),
@@ -240,6 +240,7 @@
   margin: 0;
   background: transparent;
   outline: none;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 16px;
   color: var(--neutral-neutral-900, #24272f);
   caret-color: var(--primary-primary-500, #4250af);
@@ -1329,6 +1330,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 .date-picker-cancel-button:hover {
@@ -1357,6 +1359,7 @@
   align-items: center;
   justify-content: center;
   width: 108px;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 .date-picker-apply-button:hover {
@@ -1469,7 +1472,7 @@
   flex-shrink: 0;
   cursor: pointer;
   border: none;
-  font-family: inherit;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: inherit;
 }
 
@@ -2287,6 +2290,7 @@
   cursor: pointer;
   border: none;
   transition: all 0.2s ease;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 .modal-search-button:hover {

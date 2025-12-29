@@ -173,7 +173,10 @@ const PeopleViewModal: React.FC<PeopleViewModalProps> = ({ isOpen, onClose, onSe
                   <div 
                     key={`${person}-${index}`} 
                     className={`people-view-modal-person-item ${isSelected ? 'people-view-modal-person-selected' : ''}`}
-                    onClick={() => handleTogglePerson(person)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleTogglePerson(person);
+                    }}
                   >
                     <div className="people-view-modal-person-avatar">
                       <div className="people-view-modal-person-avatar-bg" />

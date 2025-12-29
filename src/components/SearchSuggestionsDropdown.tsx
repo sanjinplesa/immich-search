@@ -5,7 +5,6 @@ import closeXGray from '../assets/close-x-gray.svg';
 import dividerLine from '../assets/divider-line.svg';
 import arrowDownIcon from '../assets/arrow-down-icon.svg';
 import arrowRightIcon from '../assets/16f676d5be3442ecdd9228f68fac1693697db02a.svg';
-import filterIcon from '../assets/filter-icon.svg';
 
 interface SearchSuggestionsDropdownProps {
   isVisible: boolean;
@@ -214,9 +213,6 @@ const SearchSuggestionsDropdown: React.FC<SearchSuggestionsDropdownProps> = ({ i
             style={{ cursor: 'pointer' }}
           >
             <div className="search-suggestions-show-more-content" data-name="Text padding" data-node-id="1605:3967">
-              <div className="search-suggestions-show-more-filter-icon" data-name="Frame" data-node-id="1605:3968">
-                <img alt="" className="search-suggestions-show-more-filter-icon-img" src={filterIcon} />
-              </div>
               <p className="search-suggestions-show-more-text" data-node-id="1605:3978">Advanced filters</p>
               <div className="search-suggestions-show-more-chevron-wrapper" data-name="Badge" data-node-id="1605:4000">
                 <div className="search-suggestions-show-more-chevron-icon-wrapper" data-name="Icon Buttons" data-node-id="1605:4004">

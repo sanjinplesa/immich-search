@@ -132,6 +132,7 @@
   margin: 0;
   background: transparent;
   outline: none;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 16px;
   color: var(--content-content-text-primary, #24272f);
   caret-color: var(--primary-primary-500, #4250af);

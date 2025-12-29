@@ -304,7 +304,7 @@
   flex-shrink: 0;
   width: 148px;
   border: none;
-  font-family: inherit;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: inherit;
 }
 

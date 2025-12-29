@@ -406,6 +406,8 @@ const DesignComponent: React.FC = () => {
         initialSearchValue={searchValue}
         onOpenAdvancedFilters={handleOpenAdvancedFilters}
         onOpenPeopleView={handleOpenPeopleView}
+        selectedPeople={selectedPeople}
+        onTogglePerson={handleTogglePerson}
       />
       
       {/* Full Advanced Filters Modal */}
@@ -415,6 +417,8 @@ const DesignComponent: React.FC = () => {
         initialSearchValue={searchValue}
         onOpenAdvancedFilters={handleOpenAdvancedFilters}
         onOpenPeopleView={handleOpenPeopleView}
+        selectedPeople={selectedPeople}
+        onTogglePerson={handleTogglePerson}
       />
       
       {/* People View Modal */}

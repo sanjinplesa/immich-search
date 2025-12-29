@@ -1,0 +1,107 @@
+.clear-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 614.769px;
+  cursor: pointer;
+  flex-shrink: 0;
+  height: 16px;
+  width: 16px;
+  padding: 2.462px;
+  transition: opacity 0.2s ease;
+  z-index: 2;
+  position: relative;
+}
+
+.clear-button:hover {
+  opacity: 0.7;
+}
+
+.clear-button:active {
+  opacity: 0.5;
+}
+
+.clear-button-icon {
+  display: block;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Special styling for modal search clear button icon */
+.modal-search-clear-button .clear-button-icon {
+  width: 19.076px;
+  height: 19.076px;
+}
+
+/* Special styling for modal location clear button icon */
+.modal-location-clear-button .clear-button-icon {
+  height: 18px;
+}
+
+/* Search input clear button positioning */
+.search-clear-button {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 3;
+}
+
+/* Modal search input clear button positioning */
+.modal-search-clear-button {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 200 !important;
+  width: 24px;
+  height: 24px;
+  /* Ensure clear button is always clickable and visible above text div */
+  pointer-events: auto !important;
+}
+
+/* Location input clear button positioning */
+.modal-location-clear-button {
+  position: relative;
+  z-index: 2;
+}
+
+/* Tag input clear button positioning */
+.modal-tags-clear-button {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 3;
+}
+
+/* Position clear button for different tag input states */
+.modal-tags-input-focused:not(.modal-tags-input-with-tags) .modal-tags-clear-button {
+  top: 9px;
+  right: 8px;
+}
+
+.modal-tags-input:not(.modal-tags-input-with-tags):not(.modal-tags-input-focused) .modal-tags-clear-button {
+  top: 10px;
+  right: 12px;
+}
+
+.modal-tags-input-with-tags .modal-tags-clear-button {
+  top: 12px;
+  right: 4px;
+}
+
+.modal-tags-input-with-tags.modal-tags-input-focused.modal-tags-single-row .modal-tags-clear-button {
+  top: 12px;
+  right: 4px;
+}
+
+.modal-tags-input-with-tags.modal-tags-input-focused:not(.modal-tags-input-adding):not(.modal-tags-single-row) .modal-tags-clear-button {
+  top: 16px;
+  right: 0;
+}
+

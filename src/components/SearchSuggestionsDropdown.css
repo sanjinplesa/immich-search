@@ -44,6 +44,7 @@
   flex-direction: column;
   gap: 0px;
   width: 100%;
+  padding-top: 20px;
 }
 
 .search-suggestions-header {
@@ -76,7 +77,7 @@
   background: transparent;
   border: none;
   transition: all 0.2s ease;
-  font-family: inherit;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: inherit;
   margin: 0;
 }
@@ -227,7 +228,7 @@
   gap: var(--spacing-xxs, 2px);
   align-items: flex-start;
   width: 100%;
-  padding-top: 16px;
+  padding-top: 0px;
 }
 
 .search-suggestions-label {
@@ -244,7 +245,6 @@
   display: flex;
   gap: 0px;
   align-items: flex-start;
-  padding-top: 12px;
   padding-bottom: 0;
   padding-left: 0;
   padding-right: 0;
@@ -442,7 +442,7 @@
   align-items: center;
   justify-content: center;
   gap: 10px;
-  padding: 10px;
+  padding: 10px 12px 10px 16px;
   border-radius: 6px;
   cursor: pointer;
   transition: background-color 0.2s ease;
@@ -588,6 +588,7 @@
   transition: background-color 0.2s ease;
   background: transparent;
   border: none;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 .search-suggestions-clear-all-button:hover {

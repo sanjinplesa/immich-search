@@ -2,10 +2,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import './AdvancedSearchModal.css';
 import './SearchSuggestionsDropdown.css';
 import './DesignComponent.css';
+import './ClearButton.css';
 import searchIcon from '../assets/search-icon.svg';
 import closeXIcon from '../assets/close-x-icon.svg';
 import iconButtonsSvg from '../assets/icon-buttons.svg';
-import filterIcon from '../assets/filter-icon.svg';
 import arrowDownIcon from '../assets/arrow-down-icon.svg';
 import arrowRightIcon from '../assets/16f676d5be3442ecdd9228f68fac1693697db02a.svg';
 import photosIconDefault from '../assets/photos-icon-default.svg';
@@ -16,8 +16,14 @@ import dateCalendarIcon from '../assets/date-calendar-icon.svg';
 import dropdownChevronIcon from '../assets/dropdown-chevron-icon.svg';
 import locationIcon from '../assets/location-icon.svg';
 import cameraIcon from '../assets/camera-icon.svg';
-import clearIcon from '../assets/clear-icon.svg';
 import tagIcon from '../assets/tag-icon.svg';
+import albumsIcon from '../assets/albums-icon.svg';
+import archiveIcon from '../assets/archive-icon.svg';
+import favoritesIcon from '../assets/favorites-icon.svg';
+import foldersIcon from '../assets/folders-icon.svg';
+import lockedFolderIcon from '../assets/locked-folder-icon.svg';
+import trashIcon from '../assets/trash-icon.svg';
+import ClearButton from './ClearButton';
 
 interface AdvancedSearchModalProps {
   isOpen: boolean;
@@ -25,6 +31,8 @@ interface AdvancedSearchModalProps {
   initialSearchValue?: string;
   onOpenAdvancedFilters?: () => void;
   onOpenPeopleView?: () => void;
+  selectedPeople?: string[];
+  onTogglePerson?: (person: string) => void;
 }
 
 interface DatePickerMenuProps {
@@ -237,7 +245,7 @@ const CameraPickerMenu: React.FC<CameraPickerMenuProps> = ({
   );
 };
 
-const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClose, initialSearchValue = '', onOpenAdvancedFilters, onOpenPeopleView }) => {
+const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClose, initialSearchValue = '', onOpenAdvancedFilters, onOpenPeopleView, selectedPeople: externalSelectedPeople = [], onTogglePerson }) => {
   const [selectedType, setSelectedType] = useState<'all' | 'photos' | 'videos'>('photos');
   const [selectedFileType, setSelectedFileType] = useState<string>('all');
   const [selectedSearchIn, setSelectedSearchIn] = useState<string>('all');
@@ -354,8 +362,7 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
     } else {
       // Reset justOpened when modal closes
       setJustOpened(true);
-      // Reset selected people when modal closes
-      setSelectedPeople(new Set());
+      // Don't reset selected people - keep them synced with external prop
       // Close date dropdown when modal closes
       setIsDateDropdownOpen(false);
       // Close camera dropdown when modal closes
@@ -366,6 +373,20 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]); // Only depend on isOpen to preserve user input
+
+  // Track isFocused state changes
+  useEffect(() => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/52cf1d1c-a05c-4de1-8cbd-2ddd09b7f859',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AdvancedSearchModal.tsx:useEffect-isFocused',message:'isFocused state changed',data:{isFocused,searchValue,shouldShowText:searchValue && !isFocused},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
+  }, [isFocused, searchValue]);
+
+  // Track searchValue changes
+  useEffect(() => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/52cf1d1c-a05c-4de1-8cbd-2ddd09b7f859',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AdvancedSearchModal.tsx:useEffect-searchValue',message:'searchValue state changed',data:{searchValue,isFocused,shouldShowText:searchValue && !isFocused},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
+  }, [searchValue, isFocused]);
 
   // Close date dropdown when clicking outside
   useEffect(() => {
@@ -425,6 +446,13 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
     }
   }, [isTagInputFocused]);
 
+  // Sync internal selectedPeople state with external prop
+  useEffect(() => {
+    if (externalSelectedPeople) {
+      setSelectedPeople(new Set(externalSelectedPeople));
+    }
+  }, [externalSelectedPeople]);
+
   const handleTogglePerson = (person: string) => {
     setSelectedPeople(prev => {
       const newSet = new Set(prev);
@@ -435,6 +463,10 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
       }
       return newSet;
     });
+    // Call parent callback if provided
+    if (onTogglePerson) {
+      onTogglePerson(person);
+    }
   };
 
 
@@ -535,6 +567,14 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
     }
   };
 
+  const handleTagInputClear = () => {
+    setTagInputValue('');
+    setTagSuggestions([]);
+    setTimeout(() => {
+      tagInputRef.current?.focus();
+    }, 0);
+  };
+
   const handleTagSuggestionSelect = (suggestion: string, e?: React.MouseEvent) => {
     if (e) {
       e.stopPropagation();
@@ -553,7 +593,8 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
   };
 
   const handleTagInputWrapperClick = (e: React.MouseEvent) => {
-    if (!(e.target as HTMLElement).closest('.modal-tag-close')) {
+    if (!(e.target as HTMLElement).closest('.modal-tag-close') && 
+        !(e.target as HTMLElement).closest('.modal-tags-clear-button')) {
       // Only focus if clicking on the input area, not on tags
       const target = e.target as HTMLElement;
       if (target.closest('.modal-tags-content') || target.closest('.modal-tags-placeholder-container')) {
@@ -583,20 +624,24 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
   };
 
   const handleSearchBlur = () => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/52cf1d1c-a05c-4de1-8cbd-2ddd09b7f859',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AdvancedSearchModal.tsx:585',message:'handleSearchBlur called',data:{searchValue,isFocused},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
     setTimeout(() => {
-      if (document.activeElement !== searchInputRef.current) {
-        setIsFocused(false);
-      }
+      // Always set to false on blur - the input is no longer focused
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/52cf1d1c-a05c-4de1-8cbd-2ddd09b7f859',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AdvancedSearchModal.tsx:589',message:'Setting isFocused to false',data:{searchValue,isFocusedBefore:true},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
+      setIsFocused(false);
     }, 150);
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchValue(e.target.value);
-  };
-
-  const handleSearchClearMouseDown = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+    const newValue = e.target.value;
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/52cf1d1c-a05c-4de1-8cbd-2ddd09b7f859',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AdvancedSearchModal.tsx:593',message:'searchValue changing',data:{oldValue:searchValue,newValue,isFocused},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
+    setSearchValue(newValue);
   };
 
   const handleSearchClear = (e: React.MouseEvent) => {
@@ -665,22 +710,48 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
     }, 0);
   };
 
+  const handleClearAll = () => {
+    setSelectedType('photos');
+    setSelectedFileType('all');
+    setSelectedSearchIn('all');
+    setTags([]);
+    setSelectedPeople(new Set());
+    setSelectedDate('Any date');
+    setLocationSearchValue('');
+    setSelectedLocation('');
+    setSelectedCamera('Any camera');
+    setSearchValue('');
+    setIsFileTypesExpanded(false);
+    setIsDateDropdownOpen(false);
+    setIsCameraDropdownOpen(false);
+    setIsLocationFocused(false);
+    setIsTagInputFocused(false);
+    setTagInputValue('');
+    setTagSuggestions([]);
+  };
+
   // Determine search input state
-  // Show default state when modal just opened, even if there's a value
+  // Show default state when modal just opened, but only if there's no value
   let searchState: "Default" | "Active4" | "Active" | "Typing" = "Default";
   if (isFocused && searchValue) {
     searchState = "Typing";
   } else if (isFocused) {
     searchState = "Active";
-  } else if (justOpened) {
-    // Show default state when modal just opened, even if there's a value
-    searchState = "Default";
   } else if (searchValue) {
-    // If there's text and modal has been interacted with, show typing state
+    // If there's text but not focused, show typing state to keep the text visible
     searchState = "Typing";
+  } else if (justOpened) {
+    // Show default state when modal just opened and there's no value
+    searchState = "Default";
   } else if (isHovered) {
     searchState = "Active4";
   }
+
+  // Debug logging - render condition check
+  const shouldShowTextDiv = searchValue && !isFocused;
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/52cf1d1c-a05c-4de1-8cbd-2ddd09b7f859',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AdvancedSearchModal.tsx:684',message:'Render condition check',data:{searchValue,isFocused,shouldShowTextDiv,searchState,searchValueTruthy:!!searchValue,isFocusedFalsy:!isFocused},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+  // #endregion
 
   const placeholderText = "Search photos by content, people, or metadata";
 
@@ -706,7 +777,7 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
           
           {/* Search Input */}
           <div 
-            className={`modal-search-input modal-search-state-${searchState.toLowerCase()}`}
+            className={`modal-search-input modal-search-state-${searchState.toLowerCase()} ${isFocused ? 'modal-search-input-focused' : ''}`}
             onClick={handleSearchWrapperClick}
             onMouseEnter={() => !isFocused && setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
@@ -721,43 +792,78 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
               </div>
             </div>
             <div className="modal-search-content" data-node-id="1587:3302">
-              {searchState === "Typing" ? (
-                <>
-                  <div className="modal-search-text-typing">
-                    <p className="modal-search-typed-text">{searchValue}</p>
+              {!searchValue || isFocused ? null : null}
+              {!isFocused && !searchValue && (
+                <div className="modal-search-text-wrapper" data-node-id="1587:3304">
+                  <div className="modal-search-placeholder" data-node-id="1587:3307">
+                    <p>{placeholderText}</p>
                   </div>
-                  <div 
-                    className="modal-search-clear-button" 
-                    onClick={handleSearchClear}
-                    onMouseDown={handleSearchClearMouseDown}
-                  >
-                    <img alt="Clear" className="modal-search-clear-icon-svg" src={iconButtonsSvg} />
-                  </div>
-                </>
-              ) : (
-                !isFocused && (
-                  <div className="modal-search-text-wrapper" data-node-id="1587:3304">
-                    <div className="modal-search-placeholder" data-node-id="1587:3307">
-                      <p>{placeholderText}</p>
-                    </div>
-                  </div>
-                )
+                </div>
               )}
             </div>
+            {/* Text div positioned relative to input container, not content div */}
+            {shouldShowTextDiv && (
+              <div 
+                className="modal-search-text-typing"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  // When clicking the typed text, focus the input
+                  setTimeout(() => {
+                    if (searchInputRef.current) {
+                      searchInputRef.current.focus();
+                      setIsFocused(true);
+                    }
+                  }, 0);
+                }}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+                style={{ cursor: 'text' }}
+                ref={(el) => {
+                  // #region agent log
+                  if (el) {
+                    fetch('http://127.0.0.1:7242/ingest/52cf1d1c-a05c-4de1-8cbd-2ddd09b7f859',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AdvancedSearchModal.tsx:738',message:'Text div rendered',data:{searchValue,isFocused,elementExists:!!el,computedStyle:el ? window.getComputedStyle(el).display : null,zIndex:el ? window.getComputedStyle(el).zIndex : null},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+                  }
+                  // #endregion
+                }}
+              >
+                <p className="modal-search-typed-text">{searchValue}</p>
+              </div>
+            )}
+            {/* Clear button - positioned on the right */}
+            {searchValue && (
+              <ClearButton
+                onClick={handleSearchClear}
+                className="modal-search-clear-button"
+                aria-label="Clear search"
+              />
+            )}
+            {/* Render input - it will be hidden by CSS when showing typed text div */}
             <input
               ref={searchInputRef}
               type="text"
-              value={searchValue}
+              value={searchValue || ''}
               onChange={handleSearchChange}
-              onFocus={() => {
+              onFocus={(e) => {
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/52cf1d1c-a05c-4de1-8cbd-2ddd09b7f859',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AdvancedSearchModal.tsx:onFocus',message:'Input focused',data:{searchValue,isFocusedBefore:isFocused},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+                // #endregion
                 setIsFocused(true);
                 setIsHovered(false);
-                setJustOpened(false); // Clear justOpened flag when user focuses
+                setJustOpened(false);
+                setTimeout(() => {
+                  if (searchInputRef.current) {
+                    const length = searchValue.length;
+                    searchInputRef.current.setSelectionRange(length, length);
+                    searchInputRef.current.focus();
+                  }
+                }, 10);
               }}
               onBlur={handleSearchBlur}
               onKeyDown={handleSearchKeyDown}
               onClick={(e) => e.stopPropagation()}
-              className="modal-search-input-hidden"
+              className={`modal-search-input-hidden ${searchValue && !isFocused ? 'modal-search-input-hidden-when-typing' : ''}`}
               aria-label="Search"
               autoComplete="off"
               spellCheck="false"
@@ -772,7 +878,7 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
             <div className="modal-label-wrapper" data-name="Label wrapper" data-node-id="1587:3309">
               <p className="modal-label" data-node-id="1587:3310">Type</p>
             </div>
-            <div className="modal-badges" data-node-id="1587:3312">
+            <div className="modal-badges modal-input-field-spacing" data-node-id="1587:3312">
               <button 
                 className={`modal-badge ${selectedType === 'all' ? 'modal-badge-selected' : 'modal-badge-default'}`}
                 onClick={() => setSelectedType('all')}
@@ -803,7 +909,7 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
                 <img 
                   src={selectedType === 'videos' ? videoIconSelected : videoIconDefault} 
                   alt="Videos" 
-                  className="modal-badge-icon"
+                  className="modal-badge-icon modal-badge-icon-video"
                 />
                 <p className={selectedType === 'videos' ? 'modal-badge-text-selected' : 'modal-badge-text'}>Videos</p>
               </button>
@@ -815,7 +921,45 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
             <div className="search-suggestions-label-wrapper" data-name="Label wrapper" data-node-id="I1563:5129;1554:3473">
               <p className="search-suggestions-label" data-node-id="I1563:5129;1554:3474">People</p>
             </div>
-            <div className="search-suggestions-people-grid" data-node-id="I1563:5129;1554:3476">
+            {/* Person chips */}
+            {Array.from(selectedPeople).length > 0 && (
+              <div className="search-person-chips" style={{ paddingTop: '8px', paddingBottom: '0' }}>
+                {Array.from(selectedPeople).map((person) => (
+                  <div key={person} className="search-person-chip" data-name="Tag" data-node-id="1719:5558">
+                    <div className="search-person-chip-content" data-name="Content" data-node-id="I1719:5558;3309:406970">
+                      <p className="search-person-chip-text" data-node-id="I1719:5558;3307:418119">
+                        {person}
+                      </p>
+                    </div>
+                    <div 
+                      className="search-person-chip-close" 
+                      data-name="_Tag close X" 
+                      data-node-id="I1719:5558;3307:418120"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        if (onTogglePerson) {
+                          onTogglePerson(person);
+                        }
+                      }}
+                      onMouseDown={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                      }}
+                    >
+                      <div className="search-person-chip-close-icon" data-name="x-close" data-node-id="I1719:5558;3307:418120;3307:417860">
+                        <div className="search-person-chip-close-icon-inner" data-name="Icon" data-node-id="I1719:5558;3307:418120;3307:417860;3463:405166">
+                          <div className="search-person-chip-close-icon-vector" style={{ "--stroke-0": "rgba(255, 255, 255, 1)" } as React.CSSProperties}>
+                            <img alt="" className="search-person-chip-close-icon-img" src={closeXIcon} />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="search-suggestions-people-grid modal-input-field-spacing" data-node-id="I1563:5129;1554:3476">
               {people.map((person, index) => {
                 const isSelected = selectedPeople.has(person);
                 return (
@@ -865,7 +1009,7 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
           <div className="modal-section" data-name="expanded" data-node-id="1587:3329">
             <div className="modal-section-inner" data-node-id="1587:3330">
               <p className="modal-label" data-node-id="1587:3331">Date</p>
-              <div className="modal-date-input-wrapper" data-node-id="1587:3332">
+              <div className="modal-date-input-wrapper modal-input-field-spacing" data-node-id="1587:3332">
                 <div 
                   className={`modal-date-input ${isDateDropdownOpen ? 'modal-date-input-focused' : ''}`}
                   data-name="Badge" 
@@ -896,8 +1040,8 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
           {/* Location Section */}
           <div className="modal-section" data-node-id="1587:3336">
             <p className="modal-label" data-node-id="1587:3337">Location</p>
-            <div className="modal-location-input-wrapper" data-node-id="1587:3338">
-              <div className={`modal-location-input ${isLocationFocused ? 'modal-location-input-focused' : ''}`} data-name="Badge" data-node-id="1587:3341">
+            <div className="modal-location-input-wrapper modal-input-field-spacing" data-node-id="1587:3338">
+              <div className={`modal-location-input ${isLocationFocused ? 'modal-location-input-focused' : ''} ${locationSearchValue ? 'modal-location-input-typing' : ''}`} data-name="Badge" data-node-id="1587:3341">
                 <img src={locationIcon} alt="Location" className="modal-location-icon" />
                 <input
                   ref={locationInputRef}
@@ -912,14 +1056,11 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
                   spellCheck="false"
                 />
                 {locationSearchValue && (
-                  <button
-                    className="modal-location-clear-button"
+                  <ClearButton
                     onClick={handleLocationClear}
-                    type="button"
-                    onMouseDown={(e) => e.preventDefault()}
-                  >
-                    <img alt="Clear" className="modal-location-clear-icon" src={clearIcon} />
-                  </button>
+                    className="modal-location-clear-button"
+                    aria-label="Clear location"
+                  />
                 )}
               </div>
               {isLocationFocused && locationSuggestions.length > 0 && (
@@ -943,7 +1084,7 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
           <div className="modal-section" data-node-id="1587:3342">
             <div className="modal-section-inner" data-node-id="1587:3342">
               <p className="modal-label" data-node-id="1587:3343">Camera</p>
-              <div className="modal-camera-input-wrapper" data-node-id="1587:3344">
+              <div className="modal-camera-input-wrapper modal-input-field-spacing" data-node-id="1587:3344">
                 <div 
                   className={`modal-camera-input ${isCameraDropdownOpen ? 'modal-camera-input-focused' : ''}`}
                   data-name="Badge" 
@@ -973,7 +1114,7 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
           {/* File Types Section */}
           <div className="modal-section" data-name="Component 7" data-node-id="1587:3348">
             <p className="modal-label" data-node-id="I1587:3348;1554:2522">File types</p>
-            <div className="modal-file-types-wrapper" data-node-id="I1587:3348;1554:2523">
+            <div className="modal-file-types-wrapper modal-input-field-spacing" data-node-id="I1587:3348;1554:2523">
               <div className="modal-file-types" data-node-id="I1587:3348;1554:2524">
                 <div className="modal-file-types-badges" data-node-id="I1587:3348;1554:2525">
                   <button 
@@ -1020,15 +1161,30 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
             <div className="modal-label-wrapper" data-name="Label wrapper" data-node-id="1587:3350">
               <p className="modal-label" data-node-id="1587:3351">Search in</p>
             </div>
-            <div className="modal-badges" data-node-id="1587:3353">
-              {['All', 'Albums', 'Favorites', 'Locked folder', 'Archive', 'Folders', 'Trash'].map((item) => (
+            <div className="modal-badges modal-badges-search-in modal-input-field-spacing" data-node-id="1587:3353">
+              {[
+                { label: 'All', value: 'all', icon: null },
+                { label: 'Albums', value: 'albums', icon: albumsIcon },
+                { label: 'Favorites', value: 'favorites', icon: favoritesIcon },
+                { label: 'Locked folder', value: 'locked folder', icon: lockedFolderIcon },
+                { label: 'Archive', value: 'archive', icon: archiveIcon },
+                { label: 'Folders', value: 'folders', icon: foldersIcon },
+                { label: 'Trash', value: 'trash', icon: trashIcon }
+              ].map((item) => (
                 <button
-                  key={item}
-                  className={`modal-badge ${selectedSearchIn === item.toLowerCase() ? 'modal-badge-selected' : 'modal-badge-default'}`}
-                  onClick={() => setSelectedSearchIn(item.toLowerCase())}
+                  key={item.value}
+                  className={`modal-badge ${selectedSearchIn === item.value ? 'modal-badge-selected' : 'modal-badge-default'}`}
+                  onClick={() => setSelectedSearchIn(item.value)}
                   data-name="Badge"
                 >
-                  <p className={selectedSearchIn === item.toLowerCase() ? 'modal-badge-text-selected' : 'modal-badge-text'}>{item}</p>
+                  {item.icon && (
+                    <img 
+                      src={item.icon} 
+                      alt={item.label} 
+                      className="modal-badge-icon"
+                    />
+                  )}
+                  <p className={selectedSearchIn === item.value ? 'modal-badge-text-selected' : 'modal-badge-text'}>{item.label}</p>
                 </button>
               ))}
             </div>
@@ -1039,7 +1195,7 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
             <div className="modal-label-wrapper" data-name="Label wrapper" data-node-id="I1587:3362;1551:3285">
               <p className="modal-label" data-node-id="I1587:3362;1551:3286">Tags</p>
             </div>
-            <div className={`modal-tags-container ${tags.length > 0 ? 'modal-tags-container-with-tags' : ''}`} data-node-id="I1587:3362;1551:3288">
+            <div className={`modal-tags-container modal-input-field-spacing ${tags.length > 0 ? 'modal-tags-container-with-tags' : ''}`} data-node-id="I1587:3362;1551:3288">
               <div ref={tagsInputWrapperRef} className={`modal-tags-input-wrapper ${isTagInputFocused ? 'modal-tags-input-wrapper-focused' : ''}`}>
                 <div 
                   className={`modal-tags-input ${isTagInputFocused ? 'modal-tags-input-focused' : ''} ${tags.length > 0 ? 'modal-tags-input-with-tags' : ''} ${isTagInputFocused && tagSuggestions.length > 0 ? 'modal-tags-input-adding' : ''} ${tags.length > 0 && isTagInputFocused && isTagsSingleRow ? 'modal-tags-single-row' : ''}`}
@@ -1105,6 +1261,16 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
                     autoComplete="off"
                     spellCheck="false"
                   />
+                  {tagInputValue && (
+                    <ClearButton
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleTagInputClear();
+                      }}
+                      className="modal-tags-clear-button"
+                      aria-label="Clear tag input"
+                    />
+                  )}
                 </div>
                 {isTagInputFocused && tagSuggestions.length > 0 && (
                   <div className="modal-tag-suggestions">
@@ -1140,22 +1306,10 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
         {/* Footer */}
         <div className="modal-footer" data-node-id="1587:3363">
           <div className="modal-footer-content" data-node-id="1587:3364">
-            <div className="modal-show-more" data-name="Buttons/Button" data-node-id="1605:3965">
-              <div className="modal-show-more-content" data-name="Text padding" data-node-id="1605:3967">
-                <div className="modal-show-more-filter-icon" data-name="Frame" data-node-id="1605:3968">
-                  <img alt="" className="modal-show-more-filter-icon-img" src={filterIcon} />
-                </div>
-                <p className="modal-show-more-text" data-node-id="1605:3978">Advanced filters</p>
-                <div className="modal-show-more-chevron-wrapper" data-name="Badge" data-node-id="1605:4000">
-                  <div className="modal-show-more-chevron-icon-wrapper" data-name="Icon Buttons" data-node-id="1605:4004">
-                    <div className="modal-show-more-chevron-icon" data-name="Badge Icons" data-node-id="1605:4005">
-                      <div className="modal-show-more-chevron-vector" data-name="Vector" data-node-id="I1605:4005;1492:5119">
-                        <img alt="" className="modal-show-more-chevron-img" src={arrowDownIcon} />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+            <div className="modal-clear-all-wrapper">
+              <button className="modal-clear-all-button" onClick={handleClearAll} type="button">
+                <p className="modal-clear-all-text">Clear all</p>
+              </button>
             </div>
             <div className="modal-footer-actions" data-node-id="1554:3546">
               <button className="modal-search-button" data-name="Buttons/Button" data-node-id="1554:3548">
